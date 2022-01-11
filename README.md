@@ -1,6 +1,4 @@
-TODO: Review this README and add or modify as necessary.
-
-## G-Core Labs DNS provider for octoDNS
+## G-Core Labs DNS v2 API provider for octoDNS
 
 An [octoDNS](https://github.com/octodns/octodns/) provider that targets [G-Core Labs DNS](https://gcorelabs.com/dns/).
 
@@ -38,21 +36,27 @@ octodns_gcore==0.0.1
 providers:
   gcore:
     class: octodns_gcore.GCoreProvider
-    # TODO
+    # Your API key
+    token: env/GCORE_TOKEN
+    token_type: APIKey
+    # or login + password
+    #login: env/GCORE_LOGIN
+    #password: env/GCORE_PASSWORD
+    #auth_url: https://api.gcdn.co
+    #url: https://dnsapi.gcorelabs.com/v2
+    #records_per_response: 1
 ```
 
 ### Support Information
 
 #### Records
 
-TODO: All octoDNS record types are supported.
+GCoreProvider supports A, AAAA, NS, MX, TXT, SRV, CNAME, and PTR
 
 #### Dynamic
 
-TODO: GCoreProvider does not support dynamic records.
+GCoreProvider supports dynamic records.
 
 ### Developement
 
 See the [/script/](/script/) directory for some tools to help with the development process. They generally follow the [Script to rule them all](https://github.com/github/scripts-to-rule-them-all) pattern. Most useful is `./script/bootstrap` which will create a venv and install both the runtime and development related requirements. It will also hook up a pre-commit hook that covers most of what's run by CI.
-
-TODO: any provider specific setup, a docker compose to run things locally etc?
