@@ -21,7 +21,7 @@ from octodns_gcore import (
 
 class TestGCoreProvider(TestCase):
     expected = Zone("unit.tests.", [])
-    source = YamlProvider("test", join(dirname(__file__), "tests", "config"))
+    source = YamlProvider("test", join(dirname(__file__), "config"))
     source.populate(expected)
 
     default_filters = [
