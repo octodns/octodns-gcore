@@ -442,7 +442,7 @@ class TestGCoreProvider(TestCase):
                         "resource_records": [{"content": ["3.2.3.4"]}],
                     },
                 ),
-            ]
+            ], any_order=True
         )
 
         # TC: create dynamics
