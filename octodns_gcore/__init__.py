@@ -587,8 +587,6 @@ class GCoreProvider(BaseProvider):
             self._client.zone_create(zone)
             self.log.info("_apply: zone has been successfully created")
 
-        changes.reverse()
-
         for change in changes:
             class_name = change.__class__.__name__
             getattr(self, f"_apply_{class_name.lower()}")(change)

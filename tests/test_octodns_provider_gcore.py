@@ -257,18 +257,104 @@ class TestGCoreProvider(TestCase):
                 call("POST", "http://api/zones", data={"name": "unit.tests"}),
                 call(
                     "POST",
-                    "http://api/zones/unit.tests/www.sub.unit.tests./A",
+                    "http://api/zones/unit.tests/unit.tests./A",
                     data={
                         "ttl": 300,
-                        "resource_records": [{"content": ["2.2.3.6"]}],
+                        "resource_records": [
+                            {"content": ["1.2.3.4"]},
+                            {"content": ["1.2.3.5"]},
+                        ],
                     },
                 ),
                 call(
                     "POST",
-                    "http://api/zones/unit.tests/www.unit.tests./A",
+                    "http://api/zones/unit.tests/_imap._tcp.unit.tests./SRV",
+                    data={
+                        "ttl": 600,
+                        "resource_records": [{"content": [0, 0, 0, "."]}],
+                    },
+                ),
+                call(
+                    "POST",
+                    "http://api/zones/unit.tests/_pop3._tcp.unit.tests./SRV",
+                    data={
+                        "ttl": 600,
+                        "resource_records": [{"content": [0, 0, 0, "."]}],
+                    },
+                ),
+                call(
+                    "POST",
+                    "http://api/zones/unit.tests/_srv._tcp.unit.tests./SRV",
+                    data={
+                        "ttl": 600,
+                        "resource_records": [
+                            {"content": [10, 20, 30, "foo-1.unit.tests."]},
+                            {"content": [12, 20, 30, "foo-2.unit.tests."]},
+                        ],
+                    },
+                ),
+                call(
+                    "POST",
+                    "http://api/zones/unit.tests/aaaa.unit.tests./AAAA",
+                    data={
+                        "ttl": 600,
+                        "resource_records": [
+                            {
+                                "content": [
+                                    "2601:644:500:e210:62f8:1dff:feb8:947a"
+                                ]
+                            }
+                        ],
+                    },
+                ),
+                call(
+                    "POST",
+                    "http://api/zones/unit.tests/cname.unit.tests./CNAME",
                     data={
                         "ttl": 300,
-                        "resource_records": [{"content": ["2.2.3.6"]}],
+                        "resource_records": [{"content": ["unit.tests."]}],
+                    },
+                ),
+                call(
+                    "POST",
+                    "http://api/zones/unit.tests/excluded.unit.tests./CNAME",
+                    data={
+                        "ttl": 3600,
+                        "resource_records": [{"content": ["unit.tests."]}],
+                    },
+                ),
+                call(
+                    "POST",
+                    "http://api/zones/unit.tests/mx.unit.tests./MX",
+                    data={
+                        "ttl": 300,
+                        "resource_records": [
+                            {"content": [10, "smtp-4.unit.tests."]},
+                            {"content": [20, "smtp-2.unit.tests."]},
+                            {"content": [30, "smtp-3.unit.tests."]},
+                            {"content": [40, "smtp-1.unit.tests."]},
+                        ],
+                    },
+                ),
+                call(
+                    "POST",
+                    "http://api/zones/unit.tests/ptr.unit.tests./PTR",
+                    data={
+                        "ttl": 300,
+                        "resource_records": [
+                            {"content": ["foo.bar.com."]},
+                        ],
+                    },
+                ),
+                call(
+                    "POST",
+                    "http://api/zones/unit.tests/sub.unit.tests./NS",
+                    data={
+                        "ttl": 3600,
+                        "resource_records": [
+                            {"content": ["6.2.3.4."]},
+                            {"content": ["7.2.3.4."]},
+                        ],
                     },
                 ),
                 call(
@@ -290,104 +376,18 @@ class TestGCoreProvider(TestCase):
                 ),
                 call(
                     "POST",
-                    "http://api/zones/unit.tests/sub.unit.tests./NS",
-                    data={
-                        "ttl": 3600,
-                        "resource_records": [
-                            {"content": ["6.2.3.4."]},
-                            {"content": ["7.2.3.4."]},
-                        ],
-                    },
-                ),
-                call(
-                    "POST",
-                    "http://api/zones/unit.tests/ptr.unit.tests./PTR",
+                    "http://api/zones/unit.tests/www.unit.tests./A",
                     data={
                         "ttl": 300,
-                        "resource_records": [
-                            {"content": ["foo.bar.com."]},
-                        ],
+                        "resource_records": [{"content": ["2.2.3.6"]}],
                     },
                 ),
                 call(
                     "POST",
-                    "http://api/zones/unit.tests/mx.unit.tests./MX",
+                    "http://api/zones/unit.tests/www.sub.unit.tests./A",
                     data={
                         "ttl": 300,
-                        "resource_records": [
-                            {"content": [10, "smtp-4.unit.tests."]},
-                            {"content": [20, "smtp-2.unit.tests."]},
-                            {"content": [30, "smtp-3.unit.tests."]},
-                            {"content": [40, "smtp-1.unit.tests."]},
-                        ],
-                    },
-                ),
-                call(
-                    "POST",
-                    "http://api/zones/unit.tests/excluded.unit.tests./CNAME",
-                    data={
-                        "ttl": 3600,
-                        "resource_records": [{"content": ["unit.tests."]}],
-                    },
-                ),
-                call(
-                    "POST",
-                    "http://api/zones/unit.tests/cname.unit.tests./CNAME",
-                    data={
-                        "ttl": 300,
-                        "resource_records": [{"content": ["unit.tests."]}],
-                    },
-                ),
-                call(
-                    "POST",
-                    "http://api/zones/unit.tests/aaaa.unit.tests./AAAA",
-                    data={
-                        "ttl": 600,
-                        "resource_records": [
-                            {
-                                "content": [
-                                    "2601:644:500:e210:62f8:1dff:feb8:947a"
-                                ]
-                            }
-                        ],
-                    },
-                ),
-                call(
-                    "POST",
-                    "http://api/zones/unit.tests/_srv._tcp.unit.tests./SRV",
-                    data={
-                        "ttl": 600,
-                        "resource_records": [
-                            {"content": [10, 20, 30, "foo-1.unit.tests."]},
-                            {"content": [12, 20, 30, "foo-2.unit.tests."]},
-                        ],
-                    },
-                ),
-                call(
-                    "POST",
-                    "http://api/zones/unit.tests/_pop3._tcp.unit.tests./SRV",
-                    data={
-                        "ttl": 600,
-                        "resource_records": [{"content": [0, 0, 0, "."]}],
-                    },
-                ),
-                call(
-                    "POST",
-                    "http://api/zones/unit.tests/_imap._tcp.unit.tests./SRV",
-                    data={
-                        "ttl": 600,
-                        "resource_records": [{"content": [0, 0, 0, "."]}],
-                    },
-                ),
-                call(
-                    "POST",
-                    "http://api/zones/unit.tests/unit.tests./A",
-                    data={
-                        "ttl": 300,
-                        "resource_records": [
-                            {"content": ["1.2.3.4"]},
-                            {"content": ["1.2.3.5"]},
-                        ],
+                        "resource_records": [{"content": ["2.2.3.6"]}],
                     },
                 ),
             ]
@@ -577,43 +577,17 @@ class TestGCoreProvider(TestCase):
             [
                 call(
                     "POST",
-                    "http://api/zones/unit.tests/geo-simple.unit.tests./A",
+                    "http://api/zones/unit.tests/cname-dflt.unit.tests./CNAME",
                     data={
                         "ttl": 300,
                         "filters": self.default_filters,
                         "resource_records": [
                             {
-                                "content": ["1.1.1.1"],
-                                "meta": {"countries": ["RU"]},
-                            },
-                            {
-                                "content": ["1.1.1.2"],
-                                "meta": {"countries": ["RU"]},
-                            },
-                            {
-                                "content": ["2.2.2.1"],
+                                "content": ["eu.unit.tests."],
                                 "meta": {"continents": ["EU"]},
                             },
                             {
-                                "content": ["3.3.3.3"],
-                                "meta": {"default": True},
-                            },
-                        ],
-                    },
-                ),
-                call(
-                    "POST",
-                    "http://api/zones/unit.tests/geo-defaults.unit.tests./A",
-                    data={
-                        "ttl": 300,
-                        "filters": self.default_filters,
-                        "resource_records": [
-                            {
-                                "content": ["2.2.2.1"],
-                                "meta": {"continents": ["EU"]},
-                            },
-                            {
-                                "content": ["3.2.3.4"],
+                                "content": ["en.unit.tests."],
                             },
                         ],
                     },
@@ -646,17 +620,43 @@ class TestGCoreProvider(TestCase):
                 ),
                 call(
                     "POST",
-                    "http://api/zones/unit.tests/cname-dflt.unit.tests./CNAME",
+                    "http://api/zones/unit.tests/geo-defaults.unit.tests./A",
                     data={
                         "ttl": 300,
                         "filters": self.default_filters,
                         "resource_records": [
                             {
-                                "content": ["eu.unit.tests."],
+                                "content": ["2.2.2.1"],
                                 "meta": {"continents": ["EU"]},
                             },
                             {
-                                "content": ["en.unit.tests."],
+                                "content": ["3.2.3.4"],
+                            },
+                        ],
+                    },
+                ),
+                call(
+                    "POST",
+                    "http://api/zones/unit.tests/geo-simple.unit.tests./A",
+                    data={
+                        "ttl": 300,
+                        "filters": self.default_filters,
+                        "resource_records": [
+                            {
+                                "content": ["1.1.1.1"],
+                                "meta": {"countries": ["RU"]},
+                            },
+                            {
+                                "content": ["1.1.1.2"],
+                                "meta": {"countries": ["RU"]},
+                            },
+                            {
+                                "content": ["2.2.2.1"],
+                                "meta": {"continents": ["EU"]},
+                            },
+                            {
+                                "content": ["3.3.3.3"],
+                                "meta": {"default": True},
                             },
                         ],
                     },
