@@ -113,7 +113,7 @@ class TestGCoreProvider(TestCase):
 
         # TC: No diffs == no changes
         with requests_mock() as mock:
-            base = "https://dnsapi.gcorelabs.com/v2/zones/unit.tests/rrsets"
+            base = "https://api.gcorelabs.com/dns/v2/zones/unit.tests/rrsets"
             with open("tests/fixtures/gcore-no-changes.json") as fh:
                 mock.get(base, text=fh.read())
 
@@ -143,7 +143,7 @@ class TestGCoreProvider(TestCase):
 
         # TC: 4 create (dynamic) + 1 removed + 7 modified
         with requests_mock() as mock:
-            base = "https://dnsapi.gcorelabs.com/v2/zones/unit.tests/rrsets"
+            base = "https://api.gcorelabs.com/dns/v2/zones/unit.tests/rrsets"
             with open("tests/fixtures/gcore-records.json") as fh:
                 mock.get(base, text=fh.read())
 
@@ -164,7 +164,7 @@ class TestGCoreProvider(TestCase):
 
         # TC: no pools can be built
         with requests_mock() as mock:
-            base = "https://dnsapi.gcorelabs.com/v2/zones/unit.tests/rrsets"
+            base = "https://api.gcorelabs.com/dns/v2/zones/unit.tests/rrsets"
             mock.get(
                 base,
                 json={
