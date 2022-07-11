@@ -53,9 +53,7 @@ class GCoreClient(object):
             )
         elif login is not None and password is not None:
             token = self._auth(auth_url, login, password)
-            self._session.headers.update(
-                {"Authorization": f"Bearer {token}"}
-            )
+            self._session.headers.update({"Authorization": f"Bearer {token}"})
         else:
             raise ValueError("either token or login & password must be set")
 
@@ -101,8 +99,9 @@ class GCoreClient(object):
         ).json()
 
     def zone_records(self, zone_name):
-        url = self._build_url(self._api_url, self.ROOT_ZONES, zone_name,
-                              "rrsets")
+        url = self._build_url(
+            self._api_url, self.ROOT_ZONES, zone_name, "rrsets"
+        )
         rrsets = self._request("GET", url, params={"all": "true"}).json()
         records = rrsets["rrsets"]
         return records
@@ -281,11 +280,7 @@ class GCoreProvider(BaseProvider):
                     for rr_value in resource_record["content"]
                 ]
             }
-        return {
-            "ttl": record["ttl"],
-            "type": _type,
-            **extra,
-        }
+        return {"ttl": record["ttl"], "type": _type, **extra}
 
     _data_for_A = _data_for_multiple
     _data_for_AAAA = _data_for_multiple
@@ -506,10 +501,7 @@ class GCoreProvider(BaseProvider):
             extra["resource_records"] = [
                 {"content": [value]} for value in record.values
             ]
-        return {
-            "ttl": record.ttl,
-            **extra,
-        }
+        return {"ttl": record.ttl, **extra}
 
     _params_for_A = _params_for_multiple
     _params_for_AAAA = _params_for_multiple
