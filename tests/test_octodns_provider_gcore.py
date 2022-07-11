@@ -26,11 +26,7 @@ class TestGCoreProvider(TestCase):
 
     default_filters = [
         {"type": "geodns"},
-        {
-            "type": "default",
-            "limit": 1,
-            "strict": False,
-        },
+        {"type": "default", "limit": 1, "strict": False},
         {"type": "first_n", "limit": 1},
     ]
 
@@ -49,16 +45,12 @@ class TestGCoreProvider(TestCase):
 
         # TC: 404 - Not Found.
         with requests_mock() as mock:
-            mock.get(
-                ANY, status_code=404, text='{"error":"zone is not found"}'
-            )
+            mock.get(ANY, status_code=404, text='{"error":"zone is not found"}')
 
             with self.assertRaises(GCoreClientNotFound) as ctx:
                 zone = Zone("unit.tests.", [])
                 provider._client.zone(zone.name)
-            self.assertIn(
-                '"error":"zone is not found"', str(ctx.exception)
-            )
+            self.assertIn('"error":"zone is not found"', str(ctx.exception))
 
         # TC: General error
         with requests_mock() as mock:
@@ -196,9 +188,7 @@ class TestGCoreProvider(TestCase):
 
         # TC: Zone does not exists but can be created.
         with requests_mock() as mock:
-            mock.get(
-                ANY, status_code=404, text='{"error":"zone is not found"}'
-            )
+            mock.get(ANY, status_code=404, text='{"error":"zone is not found"}')
             mock.post(ANY, status_code=200, text='{"id":1234}')
 
             plan = provider.plan(self.expected)
@@ -206,9 +196,7 @@ class TestGCoreProvider(TestCase):
 
         # TC: Zone does not exists and can't be created.
         with requests_mock() as mock:
-            mock.get(
-                ANY, status_code=404, text='{"error":"zone is not found"}'
-            )
+            mock.get(ANY, status_code=404, text='{"error":"zone is not found"}')
             mock.post(
                 ANY,
                 status_code=400,
@@ -341,9 +329,7 @@ class TestGCoreProvider(TestCase):
                     "http://api/zones/unit.tests/ptr.unit.tests./PTR",
                     data={
                         "ttl": 300,
-                        "resource_records": [
-                            {"content": ["foo.bar.com."]},
-                        ],
+                        "resource_records": [{"content": ["foo.bar.com."]}],
                     },
                 ),
                 call(
@@ -431,9 +417,7 @@ class TestGCoreProvider(TestCase):
 
         provider._client._request.assert_has_calls(
             [
-                call(
-                    "DELETE", "http://api/zones/unit.tests/www.unit.tests./A"
-                ),
+                call("DELETE", "http://api/zones/unit.tests/www.unit.tests./A"),
                 call(
                     "PUT",
                     "http://api/zones/unit.tests/ttl.unit.tests./A",
@@ -442,7 +426,8 @@ class TestGCoreProvider(TestCase):
                         "resource_records": [{"content": ["3.2.3.4"]}],
                     },
                 ),
-            ], any_order=True
+            ],
+            any_order=True,
         )
 
         # TC: create dynamics
@@ -472,9 +457,7 @@ class TestGCoreProvider(TestCase):
                             },
                             "pool-2": {
                                 "fallback": "other",
-                                "values": [
-                                    {"value": "2.2.2.1"},
-                                ],
+                                "values": [{"value": "2.2.2.1"}],
                             },
                             "other": {"values": [{"value": "3.3.3.3"}]},
                         },
@@ -485,7 +468,7 @@ class TestGCoreProvider(TestCase):
                         ],
                     },
                 },
-            ),
+            )
         )
         wanted.add_record(
             Record.new(
@@ -496,19 +479,11 @@ class TestGCoreProvider(TestCase):
                     "type": "A",
                     "value": "3.2.3.4",
                     "dynamic": {
-                        "pools": {
-                            "pool-1": {
-                                "values": [
-                                    {"value": "2.2.2.1"},
-                                ],
-                            },
-                        },
-                        "rules": [
-                            {"pool": "pool-1", "geos": ["EU"]},
-                        ],
+                        "pools": {"pool-1": {"values": [{"value": "2.2.2.1"}]}},
+                        "rules": [{"pool": "pool-1", "geos": ["EU"]}],
                     },
                 },
-            ),
+            )
         )
         wanted.add_record(
             Record.new(
@@ -529,9 +504,7 @@ class TestGCoreProvider(TestCase):
                             },
                             "pool-2": {
                                 "fallback": "other",
-                                "values": [
-                                    {"value": "eu.unit.tests."},
-                                ],
+                                "values": [{"value": "eu.unit.tests."}],
                             },
                             "other": {"values": [{"value": "en.unit.tests."}]},
                         },
@@ -542,7 +515,7 @@ class TestGCoreProvider(TestCase):
                         ],
                     },
                 },
-            ),
+            )
         )
         wanted.add_record(
             Record.new(
@@ -554,18 +527,12 @@ class TestGCoreProvider(TestCase):
                     "value": "en.unit.tests.",
                     "dynamic": {
                         "pools": {
-                            "pool-1": {
-                                "values": [
-                                    {"value": "eu.unit.tests."},
-                                ],
-                            },
+                            "pool-1": {"values": [{"value": "eu.unit.tests."}]}
                         },
-                        "rules": [
-                            {"pool": "pool-1", "geos": ["EU"]},
-                        ],
+                        "rules": [{"pool": "pool-1", "geos": ["EU"]}],
                     },
                 },
-            ),
+            )
         )
 
         plan = provider.plan(wanted)
@@ -586,9 +553,7 @@ class TestGCoreProvider(TestCase):
                                 "content": ["eu.unit.tests."],
                                 "meta": {"continents": ["EU"]},
                             },
-                            {
-                                "content": ["en.unit.tests."],
-                            },
+                            {"content": ["en.unit.tests."]},
                         ],
                     },
                 ),
@@ -629,9 +594,7 @@ class TestGCoreProvider(TestCase):
                                 "content": ["2.2.2.1"],
                                 "meta": {"continents": ["EU"]},
                             },
-                            {
-                                "content": ["3.2.3.4"],
-                            },
+                            {"content": ["3.2.3.4"]},
                         ],
                     },
                 ),
@@ -654,10 +617,7 @@ class TestGCoreProvider(TestCase):
                                 "content": ["2.2.2.1"],
                                 "meta": {"continents": ["EU"]},
                             },
-                            {
-                                "content": ["3.3.3.3"],
-                                "meta": {"default": True},
-                            },
+                            {"content": ["3.3.3.3"], "meta": {"default": True}},
                         ],
                     },
                 ),
