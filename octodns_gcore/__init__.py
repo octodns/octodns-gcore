@@ -17,17 +17,17 @@ __VERSION__ = '0.0.2'
 
 class GCoreClientException(ProviderException):
     def __init__(self, r):
-        super(GCoreClientException, self).__init__(r.text)
+        super().__init__(r.text)
 
 
 class GCoreClientBadRequest(GCoreClientException):
     def __init__(self, r):
-        super(GCoreClientBadRequest, self).__init__(r)
+        super().__init__(r)
 
 
 class GCoreClientNotFound(GCoreClientException):
     def __init__(self, r):
-        super(GCoreClientNotFound, self).__init__(r)
+        super().__init__(r)
 
 
 class GCoreClient(object):
@@ -147,7 +147,7 @@ class GCoreProvider(BaseProvider):
         self.records_per_response = kwargs.pop("records_per_response", 1)
         self.log = logging.getLogger(f"GCoreProvider[{id}]")
         self.log.debug("__init__: id=%s", id)
-        super(GCoreProvider, self).__init__(id, *args, **kwargs)
+        super().__init__(id, *args, **kwargs)
         self._client = GCoreClient(
             self.log,
             api_url,
