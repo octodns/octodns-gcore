@@ -132,20 +132,17 @@ class GCoreClient(object):
         return base
 
 
-class GCoreProvider(BaseProvider):
+class _BaseProvider(BaseProvider):
     SUPPORTS_GEO = False
     SUPPORTS_DYNAMIC = True
     SUPPORTS = set(("A", "AAAA", "NS", "MX", "TXT", "SRV", "CNAME", "PTR"))
 
-    def __init__(self, id, *args, **kwargs):
+    def __init__(self, id, api_url, auth_url, *args, **kwargs):
         token = kwargs.pop("token", None)
         token_type = kwargs.pop("token_type", "APIKey")
         login = kwargs.pop("login", None)
         password = kwargs.pop("password", None)
-        api_url = kwargs.pop("url", "https://api.gcorelabs.com/dns/v2")
-        auth_url = kwargs.pop("auth_url", "https://api.gcorelabs.com/id")
         self.records_per_response = kwargs.pop("records_per_response", 1)
-        self.log = logging.getLogger(f"GCoreProvider[{id}]")
         self.log.debug("__init__: id=%s", id)
         super().__init__(id, *args, **kwargs)
         self._client = GCoreClient(
@@ -582,3 +579,19 @@ class GCoreProvider(BaseProvider):
         for change in changes:
             class_name = change.__class__.__name__
             getattr(self, f"_apply_{class_name.lower()}")(change)
+
+
+class EdgeCenterProvider(_BaseProvider):
+    def __init__(self, id, *args, **kwargs):
+        self.log = logging.getLogger(f"EdgeCenterProvider[{id}]")
+        api_url = kwargs.pop("url", "https://api.edgecenter.ru/dns/v2")
+        auth_url = kwargs.pop("auth_url", "https://api.edgecenter.ru/id")
+        super().__init__(id, api_url, auth_url, *args, **kwargs)
+
+
+class GCoreProvider(_BaseProvider):
+    def __init__(self, id, *args, **kwargs):
+        self.log = logging.getLogger(f"GCoreProvider[{id}]")
+        api_url = kwargs.pop("url", "https://api.gcorelabs.com/dns/v2")
+        auth_url = kwargs.pop("auth_url", "https://api.gcorelabs.com/id")
+        super().__init__(id, api_url, auth_url, *args, **kwargs)
