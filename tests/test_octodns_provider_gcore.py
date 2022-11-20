@@ -186,7 +186,9 @@ class TestGCoreProvider(TestCase):
             )
 
     def test_apply(self):
-        provider = GCoreProvider("test_id", url="http://api", token="token")
+        provider = GCoreProvider(
+            "test_id", url="http://api", token="token", strict_supports=False
+        )
 
         # TC: Zone does not exists but can be created.
         with requests_mock() as mock:
