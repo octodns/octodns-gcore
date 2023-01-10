@@ -1,6 +1,6 @@
-## G-Core DNS v2 API provider for octoDNS
+## Gcore DNS v2 API provider for octoDNS
 
-An [octoDNS](https://github.com/octodns/octodns/) provider that target [G-Core DNS](https://gcore.com/dns/).
+An [octoDNS](https://github.com/octodns/octodns/) provider that target [Gcore DNS](https://gcore.com/dns/).
 
 ### Installation
 
