@@ -1,6 +1,6 @@
-## EdgeCenter DNS & G-Core Labs DNS v2 API provider for octoDNS
+## G-Core DNS v2 API provider for octoDNS
 
-An [octoDNS](https://github.com/octodns/octodns/) provider that targets [EdgeCenter DNS](https://edgecenter.ru/dns/) and [G-Core Labs DNS](https://gcorelabs.com/dns/).
+An [octoDNS](https://github.com/octodns/octodns/) provider that target [G-Core DNS](https://gcore.com/dns/).
 
 ### Installation
 
@@ -32,26 +32,6 @@ octodns-gcore==0.0.1
 
 ### Configuration
 
-
-#### EdgeCenterProvider
-
-```
-providers:
-  ec:
-    class: octodns_gcore.EdgeCenterProvider
-    # Your API key
-    token: env/EC_TOKEN
-    token_type: APIKey
-    # or login + password
-    #login: env/EC_LOGIN
-    #password: env/EC_PASSWORD
-    #auth_url: https://api.edgecenter.ru/id
-    #url: https://api.edgecenter.ru/dns/v2
-    #records_per_response: 1
-```
-
-#### GCoreProvider
-
 ```yaml
 providers:
   gcore:
@@ -62,8 +42,8 @@ providers:
     # or login + password
     #login: env/GCORE_LOGIN
     #password: env/GCORE_PASSWORD
-    #auth_url: https://api.gcorelabs.com/id
-    #url: https://api.gcorelabs.com/dns/v2
+    #auth_url: https://api.gcore.com/iam
+    #url: https://api.gcore.com/dns/v2
     #records_per_response: 1
 ```
 

@@ -1,3 +1,8 @@
+## v1.0.0 - 2023-01-10 - EdgeCenterProvider
+
+* Fixed validation unsupported provinces, like NA-US-OH
+* EdgeCenterProvider removed
+
 ## v0.0.3 - 2022-11-21 - EdgeCenterProvider
 
 * EdgeCenterProvider added

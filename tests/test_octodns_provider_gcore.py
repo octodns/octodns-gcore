@@ -7,13 +7,12 @@ from requests_mock import ANY, mock as requests_mock
 from unittest import TestCase
 from unittest.mock import Mock, call
 
-from octodns.record import Record, Update, Delete, Create
+from octodns.record import Create, Delete, Record, Update, ValidationError
 from octodns.provider.yaml import YamlProvider
 from octodns.zone import Zone
 
 from octodns_gcore import (
     _BaseProvider,
-    EdgeCenterProvider,
     GCoreProvider,
     GCoreClientBadRequest,
     GCoreClientNotFound,
@@ -632,5 +631,43 @@ class TestGCoreProvider(TestCase):
         provider = GCoreProvider("test_id", token="token")
         self.assertIsInstance(provider, _BaseProvider)
 
-        provider = EdgeCenterProvider("test_id", token="token")
-        self.assertIsInstance(provider, _BaseProvider)
+    def test__process_desired_zone(self):
+        provider = GCoreProvider("test_id", token="token")
+        for geo, prefix_name in [
+            ("NA-US-CA", "default"),
+            ("NA-CA-NL", "default2"),
+        ]:
+            data = {
+                "type": "CNAME",
+                "ttl": 60,
+                "value": f"{prefix_name}.unit.tests.",
+                "dynamic": {
+                    "pools": {
+                        "one": {
+                            "values": [
+                                {"value": "one1.unit.tests.", "status": "up"}
+                            ]
+                        },
+                        "two": {
+                            "values": [
+                                {"value": "two1.unit.tests.", "status": "down"},
+                                {"value": "two2.unit.tests."},
+                            ]
+                        },
+                    },
+                    "rules": [{"geos": [geo], "pool": "one"}, {"pool": "two"}],
+                },
+            }
+            zone1 = Zone("unit.tests.", [])
+            record1 = Record.new(zone1, prefix_name, data=data)
+
+            # status=up should be converted to obey
+            zone1.add_record(record1)
+            with self.assertRaises(ValidationError) as ctx:
+                provider._process_desired_zone(zone1.copy())
+
+            self.assertIn(
+                "Invalid record NA-US- and NA-CA-* not supported for",
+                str(ctx.exception),
+            )
+            self.assertIn(geo, str(ctx.exception))

@@ -5,7 +5,7 @@
     "retry": 5400,
     "refresh": 0,
     "expiry": 1209600,
-    "contact": "support@gcorelabs.com",
+    "contact": "support@gcore.com",
     "serial": 1614752868,
     "primary_server": "ns1.gcorelabs.net",
     "records": [

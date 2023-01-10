@@ -8,7 +8,7 @@ import http
 import logging
 import urllib.parse
 
-from octodns.record import GeoCodes, Record
+from octodns.record import GeoCodes, Record, ValidationError
 from octodns.provider import ProviderException
 from octodns.provider.base import BaseProvider
 
@@ -154,6 +154,33 @@ class _BaseProvider(BaseProvider):
             login=login,
             password=password,
         )
+
+    @staticmethod
+    def _validate_supported_country_code(record, geos, index=0):
+        filtered_geos = [
+            g for g in geos if g.startswith("NA-US-") or g.startswith("NA-CA-")
+        ]
+        if filtered_geos:
+            # We don't support provinces, we'll have to invalidate this rule
+            msg = f"NA-US- and NA-CA-* not supported for {record.fqdn}"
+            reason = f'rule {index} unsupported province code "{filtered_geos}"'
+            raise ValidationError(f"{msg}", [reason])
+        return True
+
+    def _process_desired_zone(self, desired):
+        for record in desired.records:
+            if getattr(record, "dynamic", False):
+                dynamic = record.dynamic
+                for index, rule in enumerate(dynamic.rules):
+                    geos = rule.data.get("geos", [])
+                    self._validate_supported_country_code(
+                        record=record, geos=geos, index=index
+                    )
+            else:
+                geos = record.data.get("geo", [])
+                self._validate_supported_country_code(record=record, geos=geos)
+
+        return super()._process_desired_zone(desired)
 
     def _add_dot_if_need(self, value):
         return f"{value}." if not value.endswith(".") else value
@@ -579,14 +606,6 @@ class _BaseProvider(BaseProvider):
         for change in changes:
             class_name = change.__class__.__name__
             getattr(self, f"_apply_{class_name.lower()}")(change)
-
-
-class EdgeCenterProvider(_BaseProvider):
-    def __init__(self, id, *args, **kwargs):
-        self.log = logging.getLogger(f"EdgeCenterProvider[{id}]")
-        api_url = kwargs.pop("url", "https://api.edgecenter.ru/dns/v2")
-        auth_url = kwargs.pop("auth_url", "https://api.edgecenter.ru/id")
-        super().__init__(id, api_url, auth_url, *args, **kwargs)
 
 
 class GCoreProvider(_BaseProvider):
