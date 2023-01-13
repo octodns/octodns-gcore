@@ -8,7 +8,7 @@ import http
 import logging
 import urllib.parse
 
-from octodns.record import GeoCodes, Record, ValidationError
+from octodns.record import GeoCodes, Record
 from octodns.provider import ProviderException
 from octodns.provider.base import BaseProvider
 
@@ -580,31 +580,69 @@ class _BaseProvider(BaseProvider):
             class_name = change.__class__.__name__
             getattr(self, f"_apply_{class_name.lower()}")(change)
 
-    @staticmethod
-    def _validate_supported_country_code(record, geos, index=0):
-        filtered_geos = [
-            g for g in geos if g.startswith("NA-US-") or g.startswith("NA-CA-")
-        ]
-        if filtered_geos:
-            # We don't support provinces, we'll have to invalidate this rule
-            msg = f"NA-US- and NA-CA-* not supported for {record.fqdn}"
-            reason = f'rule {index} unsupported province code "{filtered_geos}"'
-            raise ValidationError(f"{msg}", [reason])
-        return True
-
     def _process_desired_zone(self, desired):
         for record in desired.records:
             if getattr(record, "dynamic", False):
                 dynamic = record.dynamic
+                rules = []
                 for index, rule in enumerate(dynamic.rules):
                     geos = rule.data.get("geos", [])
-                    self._validate_supported_country_code(
-                        record=record, geos=geos, index=index
-                    )
-            else:
-                geos = record.data.get("geo", [])
-                self._validate_supported_country_code(record=record, geos=geos)
+                    if not geos:
+                        rules.append(rule)
+                        continue
+                    filtered_geos = [
+                        g
+                        for g in geos
+                        if not g.startswith('NA-US-')
+                        and not g.startswith("NA-CA-")
+                    ]
+                    if not filtered_geos:
+                        msg = f'NA-US- and NA-CA-* not supported for {record.fqdn}'
+                        fallback = f'skipping rule {index}'
+                        self.supports_warn_or_except(msg, fallback)
+                        continue
+                    elif geos != filtered_geos:
+                        msg = f'NA-US- and NA-CA-* not supported for {record.fqdn}'
+                        before = ', '.join(geos)
+                        after = ', '.join(filtered_geos)
+                        fallback = (
+                            f'filtering rule {index} from ({before}) to '
+                            f'({after})'
+                        )
+                        self.supports_warn_or_except(msg, fallback)
+                        rule.data['geos'] = filtered_geos
+                    rules.append(rule)
 
+                if rules != dynamic.rules:
+                    record = record.copy()
+                    record.dynamic.rules = rules
+                    desired.add_record(record, replace=True)
+            elif getattr(record, "geo", False):
+                geos = set(record.geo.keys())
+                filtered_geos = {
+                    g
+                    for g in geos
+                    if not g.startswith('NA-US-') and not g.startswith("NA-CA-")
+                }
+                if not filtered_geos:
+                    msg = f'NA-US- and NA-CA-* not supported for {record.fqdn}'
+                    fallback = 'skipping rule 0'
+                    self.supports_warn_or_except(msg, fallback)
+                elif geos != filtered_geos:
+                    msg = f'NA-US- and NA-CA-* not supported for {record.fqdn}'
+                    before = ', '.join(geos)
+                    after = ', '.join(filtered_geos)
+                    fallback = f'filtering rule 0 from ({before}) to ({after})'
+                    self.supports_warn_or_except(msg, fallback)
+                if geos != filtered_geos:
+                    record = record.copy()
+                    new_geo = {
+                        geo: value
+                        for geo, value in record.geo.items()
+                        if geo in filtered_geos
+                    }
+                    record.geo = new_geo
+                    desired.add_record(record, replace=True)
         return super()._process_desired_zone(desired)
 
 
