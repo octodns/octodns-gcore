@@ -580,6 +580,71 @@ class _BaseProvider(BaseProvider):
             class_name = change.__class__.__name__
             getattr(self, f"_apply_{class_name.lower()}")(change)
 
+    def _process_desired_zone(self, desired):
+        for record in desired.records:
+            if getattr(record, "dynamic", False):
+                dynamic = record.dynamic
+                rules = []
+                for index, rule in enumerate(dynamic.rules):
+                    geos = rule.data.get("geos", [])
+                    if not geos:
+                        rules.append(rule)
+                        continue
+                    filtered_geos = [
+                        g
+                        for g in geos
+                        if not g.startswith('NA-US-')
+                        and not g.startswith("NA-CA-")
+                    ]
+                    if not filtered_geos:
+                        msg = f'NA-US- and NA-CA-* not supported for {record.fqdn}'
+                        fallback = f'skipping rule {index}'
+                        self.supports_warn_or_except(msg, fallback)
+                        continue
+                    elif geos != filtered_geos:
+                        msg = f'NA-US- and NA-CA-* not supported for {record.fqdn}'
+                        before = ', '.join(geos)
+                        after = ', '.join(filtered_geos)
+                        fallback = (
+                            f'filtering rule {index} from ({before}) to '
+                            f'({after})'
+                        )
+                        self.supports_warn_or_except(msg, fallback)
+                        rule.data['geos'] = filtered_geos
+                    rules.append(rule)
+
+                if rules != dynamic.rules:
+                    record = record.copy()
+                    record.dynamic.rules = rules
+                    desired.add_record(record, replace=True)
+            elif getattr(record, "geo", False):
+                geos = set(record.geo.keys())
+                filtered_geos = {
+                    g
+                    for g in geos
+                    if not g.startswith('NA-US-') and not g.startswith("NA-CA-")
+                }
+                if not filtered_geos:
+                    msg = f'NA-US- and NA-CA-* not supported for {record.fqdn}'
+                    fallback = 'skipping rule 0'
+                    self.supports_warn_or_except(msg, fallback)
+                elif geos != filtered_geos:
+                    msg = f'NA-US- and NA-CA-* not supported for {record.fqdn}'
+                    before = ', '.join(geos)
+                    after = ', '.join(filtered_geos)
+                    fallback = f'filtering rule 0 from ({before}) to ({after})'
+                    self.supports_warn_or_except(msg, fallback)
+                if geos != filtered_geos:
+                    record = record.copy()
+                    new_geo = {
+                        geo: value
+                        for geo, value in record.geo.items()
+                        if geo in filtered_geos
+                    }
+                    record.geo = new_geo
+                    desired.add_record(record, replace=True)
+        return super()._process_desired_zone(desired)
+
 
 class EdgeCenterProvider(_BaseProvider):
     def __init__(self, id, *args, **kwargs):
