@@ -13,7 +13,6 @@ from octodns.zone import Zone
 
 from octodns_gcore import (
     _BaseProvider,
-    EdgeCenterProvider,
     GCoreProvider,
     GCoreClientBadRequest,
     GCoreClientNotFound,
@@ -630,9 +629,6 @@ class TestGCoreProvider(TestCase):
 
     def test_provider_hierarchy(self):
         provider = GCoreProvider("test_id", token="token")
-        self.assertIsInstance(provider, _BaseProvider)
-
-        provider = EdgeCenterProvider("test_id", token="token")
         self.assertIsInstance(provider, _BaseProvider)
 
     def test__process_desired_zone_dynamic(self):

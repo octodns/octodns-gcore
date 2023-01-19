@@ -646,14 +646,6 @@ class _BaseProvider(BaseProvider):
         return super()._process_desired_zone(desired)
 
 
-class EdgeCenterProvider(_BaseProvider):
-    def __init__(self, id, *args, **kwargs):
-        self.log = logging.getLogger(f"EdgeCenterProvider[{id}]")
-        api_url = kwargs.pop("url", "https://api.edgecenter.ru/dns/v2")
-        auth_url = kwargs.pop("auth_url", "https://api.edgecenter.ru/id")
-        super().__init__(id, api_url, auth_url, *args, **kwargs)
-
-
 class GCoreProvider(_BaseProvider):
     def __init__(self, id, *args, **kwargs):
         self.log = logging.getLogger(f"GCoreProvider[{id}]")
