@@ -7,7 +7,7 @@ from requests_mock import ANY, mock as requests_mock
 from unittest import TestCase
 from unittest.mock import Mock, call
 
-from octodns.record import Record, Update, Delete, Create
+from octodns.record import Create, Delete, Record, Update
 from octodns.provider.yaml import YamlProvider
 from octodns.zone import Zone
 
@@ -630,3 +630,84 @@ class TestGCoreProvider(TestCase):
     def test_provider_hierarchy(self):
         provider = GCoreProvider("test_id", token="token")
         self.assertIsInstance(provider, _BaseProvider)
+
+    def test__process_desired_zone_dynamic(self):
+        provider = GCoreProvider("test_id", token="token")
+        for geo, prefix_name in [
+            ("NA-US-CA", "default"),
+            ("NA-CA-NL", "default2"),
+        ]:
+            data = {
+                "type": "CNAME",
+                "ttl": 60,
+                "value": f"{prefix_name}.unit.tests.",
+                "dynamic": {
+                    "pools": {
+                        "one": {
+                            "values": [
+                                {"value": "one1.unit.tests.", "status": "up"}
+                            ]
+                        },
+                        "two": {
+                            "values": [
+                                {"value": "two1.unit.tests.", "status": "down"},
+                                {"value": "two2.unit.tests."},
+                            ]
+                        },
+                        "three": {
+                            "values": [
+                                {"value": "three1.unit.tests.", "status": "up"}
+                            ]
+                        },
+                    },
+                    "rules": [
+                        {"geos": [geo, "AS"], "pool": "one"},
+                        {"geos": ["AS"], "pool": "two"},
+                        {"geos": [geo], "pool": "three"},
+                    ],
+                },
+            }
+            zone1 = Zone("unit.tests.", [])
+            record1 = Record.new(zone1, prefix_name, data=data)
+
+            zone1.add_record(record1)
+            result = provider._process_desired_zone(zone1.copy())
+            for record in result.records:
+                for rule in record.dynamic.rules:
+                    geos = rule.data.get("geos", [])
+                    assert geos == [
+                        g
+                        for g in geos
+                        if not g.startswith('NA-US-')
+                        and not g.startswith("NA-CA-")
+                    ]
+
+    def test__process_desired_zone_not_dynamic(self):
+        provider = GCoreProvider("test_id", token="token")
+        geos = [
+            {"AF": ["2.2.3.4", "2.2.3.5"], "NA-US-CA": ["5.2.3.4", "5.2.3.5"]},
+            {"AF": ["2.2.3.4", "2.2.3.5"]},
+            {"NA-US-CA": ["5.2.3.4", "5.2.3.5"]},
+        ]
+        for i in geos:
+            data = {
+                "geo": i,
+                "ttl": 60,
+                "type": "A",
+                "values": ["1.2.3.4", "1.2.3.5"],
+            }
+            zone1 = Zone("unit.tests.", [])
+            record1 = Record.new(zone1, "test", data=data)
+
+            zone1.add_record(record1)
+            result = provider._process_desired_zone(zone1.copy())
+            for record in result.records:
+                geos = record.data.get("geo", {})
+                assert sorted(geos.keys()) == sorted(
+                    [
+                        g
+                        for g in geos
+                        if not g.startswith('NA-US-')
+                        and not g.startswith("NA-CA-")
+                    ]
+                )

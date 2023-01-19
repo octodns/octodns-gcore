@@ -44,8 +44,8 @@ providers:
     # or login + password
     #login: env/GCORE_LOGIN
     #password: env/GCORE_PASSWORD
-    #auth_url: https://api.gcorelabs.com/id
-    #url: https://api.gcorelabs.com/dns/v2
+    #auth_url: https://api.gcore.com/iam
+    #url: https://api.gcore.com/dns/v2
     #records_per_response: 1
 ```
 
