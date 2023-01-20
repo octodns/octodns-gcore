@@ -649,6 +649,6 @@ class _BaseProvider(BaseProvider):
 class GCoreProvider(_BaseProvider):
     def __init__(self, id, *args, **kwargs):
         self.log = logging.getLogger(f"GCoreProvider[{id}]")
-        api_url = kwargs.pop("url", "https://api.gcorelabs.com/dns/v2")
-        auth_url = kwargs.pop("auth_url", "https://api.gcorelabs.com/id")
+        api_url = kwargs.pop("url", "https://api.gcore.com/dns/v2")
+        auth_url = kwargs.pop("auth_url", "https://api.gcore.com/id")
         super().__init__(id, api_url, auth_url, *args, **kwargs)
