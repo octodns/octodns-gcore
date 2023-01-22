@@ -632,7 +632,9 @@ class TestGCoreProvider(TestCase):
         self.assertIsInstance(provider, _BaseProvider)
 
     def test__process_desired_zone_dynamic(self):
-        provider = GCoreProvider("test_id", token="token")
+        provider = GCoreProvider(
+            "test_id", token="token", strict_supports=False
+        )
         for geo, prefix_name in [
             ("NA-US-CA", "default"),
             ("NA-CA-NL", "default2"),
@@ -683,7 +685,9 @@ class TestGCoreProvider(TestCase):
                     ]
 
     def test__process_desired_zone_not_dynamic(self):
-        provider = GCoreProvider("test_id", token="token")
+        provider = GCoreProvider(
+            "test_id", token="token", strict_supports=False
+        )
         geos = [
             {"AF": ["2.2.3.4", "2.2.3.5"], "NA-US-CA": ["5.2.3.4", "5.2.3.5"]},
             {"AF": ["2.2.3.4", "2.2.3.5"]},
