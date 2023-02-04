@@ -2,15 +2,16 @@
 #
 #
 
-from collections import defaultdict
-from requests import Session
 import http
 import logging
 import urllib.parse
+from collections import defaultdict
 
-from octodns.record import GeoCodes, Record
+from requests import Session
+
 from octodns.provider import ProviderException
 from octodns.provider.base import BaseProvider
+from octodns.record import GeoCodes, Record
 
 __VERSION__ = '0.0.3'
 
@@ -31,7 +32,6 @@ class GCoreClientNotFound(GCoreClientException):
 
 
 class GCoreClient(object):
-
     ROOT_ZONES = "zones"
 
     def __init__(
