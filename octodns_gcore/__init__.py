@@ -9,6 +9,7 @@ from collections import defaultdict
 
 from requests import Session
 
+from octodns import __VERSION__ as octodns_version
 from octodns.provider import ProviderException
 from octodns.provider.base import BaseProvider
 from octodns.record import GeoCodes, Record
@@ -46,6 +47,11 @@ class GCoreClient(object):
     ):
         self.log = log
         self._session = Session()
+        self._session.headers.update(
+            {
+                'User-Agent': f'octodns/{octodns_version} octodns-gcore/{__VERSION__}'
+            }
+        )
         self._api_url = api_url
         if token is not None and token_type is not None:
             self._session.headers.update(
