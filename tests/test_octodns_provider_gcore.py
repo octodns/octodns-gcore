@@ -185,6 +185,29 @@ class TestGCoreProvider(TestCase):
                 f"{ctx.exception} - is not start from desired text",
             )
 
+        # ALIAS at root
+        with requests_mock() as mock:
+            base = "https://api.gcore.com/dns/v2/zones/unit.tests/rrsets"
+            mock.get(
+                base,
+                json={
+                    "rrsets": [
+                        {
+                            "name": "unit.tests.",
+                            "type": "CNAME",
+                            "ttl": 300,
+                            "resource_records": [
+                                {"content": ["cname.unit.tests"]}
+                            ],
+                        }
+                    ]
+                },
+            )
+
+            zone = Zone("unit.tests.", [])
+            provider.populate(zone)
+            self.assertEqual(1, len(zone.records))
+
     def test_apply(self):
         provider = GCoreProvider(
             "test_id", url="http://api", token="token", strict_supports=False
@@ -428,6 +451,142 @@ class TestGCoreProvider(TestCase):
                     data={
                         "ttl": 300,
                         "resource_records": [{"content": ["3.2.3.4"]}],
+                    },
+                ),
+            ],
+            any_order=True,
+        )
+
+        # create ALIAS at root
+        provider._client._request.reset_mock()
+        provider._client.zone_records = Mock(
+            return_value=[
+                {
+                    "name": "",
+                    "ttl": 300,
+                    "type": "A",
+                    "resource_records": [{"content": ["1.2.3.4"]}],
+                }
+            ]
+        )
+
+        # Domain exists, we don't care about return
+        resp.json.side_effect = ["{}"]
+
+        wanted = Zone("unit.tests.", [])
+        wanted.add_record(
+            Record.new(
+                wanted,
+                "",
+                {"ttl": 300, "type": "ALIAS", "value": "cname.unit.tests."},
+            )
+        )
+
+        plan = provider.plan(wanted)
+        self.assertTrue(plan.exists)
+        self.assertEqual(2, len(plan.changes))
+        self.assertEqual(2, provider.apply(plan))
+
+        provider._client._request.assert_has_calls(
+            [
+                call("DELETE", "http://api/zones/unit.tests/unit.tests./A"),
+                call(
+                    "POST",
+                    "http://api/zones/unit.tests/unit.tests./CNAME",
+                    data={
+                        "ttl": 300,
+                        "resource_records": [
+                            {"content": ["cname.unit.tests."]}
+                        ],
+                    },
+                ),
+            ],
+            any_order=True,
+        )
+
+        # update ALIAS at root
+        provider._client._request.reset_mock()
+        provider._client.zone_records = Mock(
+            return_value=[
+                {
+                    "name": "",
+                    "ttl": 300,
+                    "type": "CNAME",
+                    "resource_records": [{"content": ["cname.unit.tests."]}],
+                }
+            ]
+        )
+
+        # Domain exists, we don't care about return
+        resp.json.side_effect = ["{}"]
+
+        wanted = Zone("unit.tests.", [])
+        wanted.add_record(
+            Record.new(
+                wanted,
+                "",
+                {"ttl": 300, "type": "ALIAS", "value": "cname2.unit.tests."},
+            )
+        )
+
+        plan = provider.plan(wanted)
+        self.assertTrue(plan.exists)
+        self.assertEqual(1, len(plan.changes))
+        self.assertEqual(1, provider.apply(plan))
+
+        provider._client._request.assert_has_calls(
+            [
+                call(
+                    "PUT",
+                    "http://api/zones/unit.tests/unit.tests./CNAME",
+                    data={
+                        "ttl": 300,
+                        "resource_records": [
+                            {"content": ["cname2.unit.tests."]}
+                        ],
+                    },
+                )
+            ],
+            any_order=True,
+        )
+
+        # delete ALIAS at root
+        provider._client._request.reset_mock()
+        provider._client.zone_records = Mock(
+            return_value=[
+                {
+                    "name": "",
+                    "ttl": 300,
+                    "type": "CNAME",
+                    "resource_records": [{"content": ["cname.unit.tests."]}],
+                }
+            ]
+        )
+
+        # Domain exists, we don't care about return
+        resp.json.side_effect = ["{}"]
+
+        wanted = Zone("unit.tests.", [])
+        wanted.add_record(
+            Record.new(
+                wanted, "", {"ttl": 300, "type": "A", "value": "1.2.3.4"}
+            )
+        )
+
+        plan = provider.plan(wanted)
+        self.assertTrue(plan.exists)
+        self.assertEqual(2, len(plan.changes))
+        self.assertEqual(2, provider.apply(plan))
+
+        provider._client._request.assert_has_calls(
+            [
+                call("DELETE", "http://api/zones/unit.tests/unit.tests./CNAME"),
+                call(
+                    "POST",
+                    "http://api/zones/unit.tests/unit.tests./A",
+                    data={
+                        "ttl": 300,
+                        "resource_records": [{"content": ["1.2.3.4"]}],
                     },
                 ),
             ],

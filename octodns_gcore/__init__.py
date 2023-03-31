@@ -113,16 +113,25 @@ class GCoreClient(object):
         return records
 
     def record_create(self, zone_name, rrset_name, type_, data):
+        # change ALIAS records to CNAME
+        if type_ == 'ALIAS':
+            type_ = 'CNAME'
         self._request(
             "POST", self._rrset_url(zone_name, rrset_name, type_), data=data
         )
 
     def record_update(self, zone_name, rrset_name, type_, data):
+        # change ALIAS records to CNAME
+        if type_ == 'ALIAS':
+            type_ = 'CNAME'
         self._request(
             "PUT", self._rrset_url(zone_name, rrset_name, type_), data=data
         )
 
     def record_delete(self, zone_name, rrset_name, type_):
+        # change ALIAS records to CNAME
+        if type_ == 'ALIAS':
+            type_ = 'CNAME'
         self._request("DELETE", self._rrset_url(zone_name, rrset_name, type_))
 
     def _rrset_url(self, zone_name, rrset_name, type_):
@@ -141,7 +150,9 @@ class GCoreClient(object):
 class _BaseProvider(BaseProvider):
     SUPPORTS_GEO = False
     SUPPORTS_DYNAMIC = True
-    SUPPORTS = set(("A", "AAAA", "NS", "MX", "TXT", "SRV", "CNAME", "PTR"))
+    SUPPORTS = set(
+        ("A", "AAAA", 'ALIAS', "NS", "MX", "TXT", "SRV", "CNAME", "PTR")
+    )
 
     def __init__(self, id, api_url, auth_url, *args, **kwargs):
         token = kwargs.pop("token", None)
@@ -252,6 +263,7 @@ class _BaseProvider(BaseProvider):
         }
 
     _data_for_PTR = _data_for_single
+    _data_for_ALIAS = _data_for_single
 
     def _data_for_CNAME(self, _type, record):
         if record.get("filters") is None:
@@ -359,12 +371,14 @@ class _BaseProvider(BaseProvider):
         values = defaultdict(defaultdict)
         records, exists = self.zone_records(zone)
         for record in records:
+            rr_name = zone.hostname_from_fqdn(record["name"])
             _type = record["type"].upper()
+            if _type == 'CNAME' and rr_name == '':
+                _type = 'ALIAS'
             if _type not in self.SUPPORTS:
                 continue
             if self._should_ignore(record):
                 continue
-            rr_name = zone.hostname_from_fqdn(record["name"])
             values[rr_name][_type] = record
 
         before = len(zone.records)
@@ -468,6 +482,7 @@ class _BaseProvider(BaseProvider):
         }
 
     _params_for_PTR = _params_for_single
+    _params_for_ALIAS = _params_for_single
 
     def _params_for_CNAME(self, record):
         if not record.dynamic:
