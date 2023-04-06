@@ -142,7 +142,7 @@ class TestGCoreProvider(TestCase):
                 mock.get(base, text=fh.read())
 
             zone = Zone("unit.tests.", [])
-            provider.populate(zone)
+            provider.populate(zone, lenient=True)
             self.assertEqual(16, len(zone.records))
             changes = self.expected.changes(zone, provider)
             self.assertEqual(11, len(changes))
@@ -646,6 +646,7 @@ class TestGCoreProvider(TestCase):
                         "rules": [{"pool": "pool-1", "geos": ["EU"]}],
                     },
                 },
+                lenient=True,
             )
         )
         wanted.add_record(
@@ -695,6 +696,7 @@ class TestGCoreProvider(TestCase):
                         "rules": [{"pool": "pool-1", "geos": ["EU"]}],
                     },
                 },
+                lenient=True,
             )
         )
 
@@ -830,7 +832,7 @@ class TestGCoreProvider(TestCase):
                 },
             }
             zone1 = Zone("unit.tests.", [])
-            record1 = Record.new(zone1, prefix_name, data=data)
+            record1 = Record.new(zone1, prefix_name, data=data, lenient=True)
 
             zone1.add_record(record1)
             result = provider._process_desired_zone(zone1.copy())
