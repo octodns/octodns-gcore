@@ -1,3 +1,9 @@
+## v0.0.4 - 2023-04-27 - ALIAS support
+
+* add support for ALIAS as a CNAME at root
+* Fixed validation of unsupported provinces
+* API requests set a user agent with version
+
 ## v0.0.3 - 2022-11-21 - EdgeCenterProvider
 
 * EdgeCenterProvider added
