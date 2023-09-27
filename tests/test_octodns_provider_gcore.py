@@ -113,7 +113,7 @@ class TestGCoreProvider(TestCase):
 
             zone = Zone("unit.tests.", [])
             provider.populate(zone)
-            self.assertEqual(14, len(zone.records))
+            self.assertEqual(15, len(zone.records))
             self.assertEqual(
                 {
                     "",
@@ -143,7 +143,7 @@ class TestGCoreProvider(TestCase):
 
             zone = Zone("unit.tests.", [])
             provider.populate(zone, lenient=True)
-            self.assertEqual(16, len(zone.records))
+            self.assertEqual(17, len(zone.records))
             changes = self.expected.changes(zone, provider)
             self.assertEqual(11, len(changes))
             self.assertEqual(
@@ -257,8 +257,8 @@ class TestGCoreProvider(TestCase):
         plan = provider.plan(self.expected)
 
         # TC: create all
-        self.assertEqual(13, len(plan.changes))
-        self.assertEqual(13, provider.apply(plan))
+        self.assertEqual(14, len(plan.changes))
+        self.assertEqual(14, provider.apply(plan))
         self.assertFalse(plan.exists)
 
         provider._client._request.assert_has_calls(
@@ -278,6 +278,16 @@ class TestGCoreProvider(TestCase):
                         "resource_records": [
                             {"content": ["1.2.3.4"]},
                             {"content": ["1.2.3.5"]},
+                        ],
+                    },
+                ),
+                call(
+                    "POST",
+                    "http://api/zones/unit.tests/unit.tests./CAA",
+                    data={
+                        "ttl": 300,
+                        "resource_records": [
+                            {"content": [0, "issue", "ca.unit.tests"]}
                         ],
                     },
                 ),
@@ -406,7 +416,7 @@ class TestGCoreProvider(TestCase):
             ]
         )
         # expected number of total calls
-        self.assertEqual(16, provider._client._request.call_count)
+        self.assertEqual(17, provider._client._request.call_count)
 
         # TC: delete 1 and update 1
         provider._client._request.reset_mock()

@@ -29,7 +29,8 @@
     values:
     - ns1.gcorelabs.net.
     - ns2.gcdn.services.
-  - type: CAA
+  - ttl: 300
+    type: CAA
     values:
     - flags: 0
       tag: issue
