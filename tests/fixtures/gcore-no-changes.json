@@ -19,6 +19,20 @@
         },
         {
             "name": "unit.tests",
+            "type": "CAA",
+            "ttl": 300,
+            "resource_records": [
+                {
+                    "content": [
+                        0,
+                        "issue",
+                        "ca.unit.tests"
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "unit.tests",
             "type": "NS",
             "ttl": 300,
             "resource_records": [

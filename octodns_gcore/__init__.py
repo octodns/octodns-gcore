@@ -151,7 +151,7 @@ class _BaseProvider(BaseProvider):
     SUPPORTS_GEO = False
     SUPPORTS_DYNAMIC = True
     SUPPORTS = set(
-        ("A", "AAAA", 'ALIAS', "NS", "MX", "TXT", "SRV", "CNAME", "PTR")
+        ("A", "AAAA", "ALIAS", "CAA", "NS", "MX", "TXT", "SRV", "CNAME", "PTR")
     )
 
     def __init__(self, id, api_url, auth_url, *args, **kwargs):
@@ -349,6 +349,18 @@ class _BaseProvider(BaseProvider):
                     target=self._add_dot_if_need(target),
                 )
                 for priority, weight, port, target in map(
+                    lambda x: x["content"], record["resource_records"]
+                )
+            ],
+        }
+
+    def _data_for_CAA(self, _type, record):
+        return {
+            "ttl": record["ttl"],
+            "type": _type,
+            "values": [
+                dict(flags=flags, tag=tag, value=value)
+                for flags, tag, value in map(
                     lambda x: x["content"], record["resource_records"]
                 )
             ],
@@ -555,6 +567,15 @@ class _BaseProvider(BaseProvider):
             "ttl": record.ttl,
             "resource_records": [
                 {"content": [rec.priority, rec.weight, rec.port, rec.target]}
+                for rec in record.values
+            ],
+        }
+
+    def _params_for_CAA(self, record):
+        return {
+            "ttl": record.ttl,
+            "resource_records": [
+                {"content": [rec.flags, rec.tag, rec.value]}
                 for rec in record.values
             ],
         }
