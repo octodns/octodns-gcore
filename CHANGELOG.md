@@ -1,3 +1,7 @@
+## v0.0.5 - 2023-12-xx - Root NS support
+
+* Add support for root NS updates
+
 ## v0.0.4 - 2023-04-27 - ALIAS support
 
 * add support for ALIAS as a CNAME at root

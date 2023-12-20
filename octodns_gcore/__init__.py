@@ -151,6 +151,7 @@ class GCoreClient(object):
 class _BaseProvider(BaseProvider):
     SUPPORTS_GEO = False
     SUPPORTS_DYNAMIC = True
+    SUPPORTS_ROOT_NS = True
     SUPPORTS = set(
         ("A", "AAAA", "ALIAS", "CAA", "NS", "MX", "TXT", "SRV", "CNAME", "PTR")
     )

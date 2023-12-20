@@ -257,8 +257,8 @@ class TestGCoreProvider(TestCase):
         plan = provider.plan(self.expected)
 
         # TC: create all
-        self.assertEqual(14, len(plan.changes))
-        self.assertEqual(14, provider.apply(plan))
+        self.assertEqual(15, len(plan.changes))
+        self.assertEqual(15, provider.apply(plan))
         self.assertFalse(plan.exists)
 
         provider._client._request.assert_has_calls(
@@ -288,6 +288,17 @@ class TestGCoreProvider(TestCase):
                         "ttl": 300,
                         "resource_records": [
                             {"content": [0, "issue", "ca.unit.tests"]}
+                        ],
+                    },
+                ),
+                call(
+                    "POST",
+                    "http://api/zones/unit.tests/unit.tests./NS",
+                    data={
+                        "ttl": 300,
+                        "resource_records": [
+                            {"content": ["ns1.gcorelabs.net."]},
+                            {"content": ["ns2.gcdn.services."]},
                         ],
                     },
                 ),
@@ -416,7 +427,7 @@ class TestGCoreProvider(TestCase):
             ]
         )
         # expected number of total calls
-        self.assertEqual(17, provider._client._request.call_count)
+        self.assertEqual(18, provider._client._request.call_count)
 
         # TC: delete 1 and update 1
         provider._client._request.reset_mock()

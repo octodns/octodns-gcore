@@ -53,7 +53,11 @@ providers:
 
 #### Records
 
-Supports A, AAAA, NS, MX, TXT, SRV, CNAME, and PTR
+Supports A, AAAA, ALIAS (CNAME flattening), NS, MX, TXT, SRV, CNAME, and PTR.
+CNAME flattening resolves both A and AAAA records and inherits the upstream TTL.
+
+#### Root NS Records
+The GCore provider supports full root NS record management.
 
 #### Dynamic
 
