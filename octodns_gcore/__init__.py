@@ -16,6 +16,7 @@ from octodns.record import GeoCodes, Record, Update
 
 __VERSION__ = '0.0.5'
 
+
 class GCoreClientException(ProviderException):
     def __init__(self, r):
         super().__init__(r.text)
@@ -282,27 +283,22 @@ class _BaseProvider(BaseProvider):
     def _data_for_multiple(self, _type, record):
         extra = dict()
         filters = record.get("filters")
-        # self.log.debug('_data_for_multiple filters = %s', str(filters))
-
         if filters is not None:
             filter_types = [filter['type'] for filter in filters]
-
-            if 'healthcheck' in filter_types:
-                pools, rules, octodns, defaults = (
-                    self._data_dynamic_healthcheck(record)
-                )
-
-                extra = {
-                    'dynamic': {'pools': pools, 'rules': [{'pool': 'pool-0'}]},
-                    'octodns': octodns,
-                    "values": defaults,
-                }
-
-            elif 'geodns' in filter_types:
-
+            if 'geodns' in filter_types:
                 pools, rules, defaults = self._data_for_dynamic_geo(record)
                 extra = {
                     "dynamic": {"pools": pools, "rules": rules},
+                    "values": defaults,
+                }
+            else:
+                # other type should be "healthcheck"
+                pools, rules, octodns, defaults = (
+                    self._data_dynamic_healthcheck(record)
+                )
+                extra = {
+                    'dynamic': {'pools': pools, 'rules': [{'pool': 'pool-0'}]},
+                    'octodns': octodns,
                     "values": defaults,
                 }
         else:
@@ -479,9 +475,17 @@ class _BaseProvider(BaseProvider):
         filters = record.get("filters", [])
         types = [v.get("type") for v in filters]
 
-        if 'healthcheck' or 'weighted_shuffle' in types:
+        if 'healthcheck' in types or ' ' in types:
             return False
 
+        want_filters = 3
+        if len(filters) != want_filters:
+            self.log.info(
+                "ignore %s has filters and their count is not %d",
+                name,
+                want_filters,
+            )
+            return True
         for i, want_type in enumerate(["geodns", "default", "first_n"]):
             if types[i] != want_type:
                 self.log.info(
@@ -645,25 +649,6 @@ class _BaseProvider(BaseProvider):
 
         return {"ttl": record.ttl, **extra}
 
-    def _params_for_multiple_old(self, record):
-        extra = dict()
-        if record.dynamic:
-            extra["resource_records"] = self._params_for_dynamic_geo(record)
-            extra["filters"] = [
-                {"type": "geodns"},
-                {
-                    "type": "default",
-                    "limit": self.records_per_response,
-                    "strict": False,
-                },
-                {"type": "first_n", "limit": self.records_per_response},
-            ]
-        else:
-            extra["resource_records"] = [
-                {"content": [value]} for value in record.values
-            ]
-        return {"ttl": record.ttl, **extra}
-
     _params_for_A = _params_for_multiple
     _params_for_AAAA = _params_for_multiple
 
@@ -759,7 +744,7 @@ class _BaseProvider(BaseProvider):
             update = False
 
             desired_record = desired_records[record]
-            if record.octodns == desired_records[record].octodns:
+            if record.octodns == desired_record.octodns:
                 continue
             update = True
 

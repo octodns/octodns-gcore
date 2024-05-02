@@ -437,6 +437,201 @@
                     ]
                 }
             ]
+        },
+        {
+            "id": 123456,
+            "name": "healthcheck.unit.tests.",
+            "type": "A",
+            "ttl": 30,
+            "meta": {
+                "failover": {
+                    "frequency": 60,
+                    "host": "gcore-test.tld",
+                    "http_status_code": 200,
+                    "method": "GET",
+                    "path": "/monitor",
+                    "port": 80,
+                    "protocol": "HTTP",
+                    "regexp": "ok",
+                    "timeout": 10,
+                    "tls": false,
+                    "url": "/monitor"
+                }
+            },
+            "updated_at": 1713802438584317000,
+            "filter_set_id": 234567,
+            "filters": [
+                {
+                    "type": "healthcheck",
+                    "strict": false
+                },
+                {
+                    "type": "weighted_shuffle",
+                    "strict": false
+                }
+            ],
+            "pickers": [
+                {
+                    "type": "healthcheck",
+                    "strict": false
+                },
+                {
+                    "type": "weighted_shuffle",
+                    "strict": false
+                }
+            ],
+            "resource_records": [
+                {
+                    "id": 8765432,
+                    "content": [
+                        "1.2.3.4"
+                    ],
+                    "enabled": true,
+                    "meta": {}
+                },
+                {
+                    "id": 7654321,
+                    "content": [
+                        "5.6.7.8"
+                    ],
+                    "enabled": true,
+                    "meta": {}
+                }
+            ]
+        },
+        {
+            "name": "healthcheck-update.unit.tests.",
+            "type": "A",
+            "ttl": 300,
+            "meta": {
+                "failover": {
+                    "host": "gcore-test.tld",
+                    "path": "/dns-monitor",
+                    "port": 80,
+                    "protocol": "HTTP",
+                    "frequency": 300,
+                    "http_status_code": 200,
+                    "method": "GET",
+                    "regexp": "ok",
+                    "timeout": 10,
+                    "tls": false,
+                    "url": "/dns-monitor"
+                }
+            },
+            "pickers": [
+                {
+                    "type": "healthcheck",
+                    "strict": false
+                },
+                {
+                    "type": "weighted_shuffle",
+                    "strict": false
+                }
+            ],
+            "resource_records": [
+                {
+                    "content": [
+                        "1.2.3.4"
+                    ],
+                    "enabled": true,
+                    "meta": {}
+                },
+                {
+                    "content": [
+                        "5.6.7.8"
+                    ],
+                    "enabled": true,
+                    "meta": {}
+                }
+            ]
+        },
+        {
+            "name": "healthcheck-not-ignored.unit.tests.",
+            "type": "A",
+            "ttl": 300,
+            "meta": {
+                "failover": {
+                    "host": "gcore-test.tld",
+                    "path": "/dns-monitor",
+                    "port": 80,
+                    "protocol": "HTTP",
+                    "frequency": 300,
+                    "http_status_code": 200,
+                    "method": "GET",
+                    "regexp": "ok",
+                    "timeout": 10,
+                    "tls": false,
+                    "url": "/dns-monitor"
+                }
+            },
+            "pickers": [
+                {
+                    "type": "distance",
+                    "strict": false
+                },
+                {
+                    "type": "weighted_shuffle",
+                    "strict": false
+                }
+            ],
+            "resource_records": [
+                {
+                    "content": [
+                        "1.2.3.4"
+                    ],
+                    "enabled": true,
+                    "meta": {}
+                },
+                {
+                    "content": [
+                        "5.6.7.8"
+                    ],
+                    "enabled": true,
+                    "meta": {}
+                }
+            ]
+        },
+        {
+            "name": "healthcheck-ignored.unit.tests.",
+            "type": "A",
+            "ttl": 300,
+            "meta": {
+                "failover": {
+                    "host": "gcore-test.tld",
+                    "path": "/monitor",
+                    "port": 80,
+                    "protocol": "HTTP",
+                    "frequency": 300,
+                    "http_status_code": 200,
+                    "method": "GET",
+                    "regexp": "ok",
+                    "timeout": 10,
+                    "tls": false
+                }
+            },
+            "filters": [
+                {
+                    "type": "distance",
+                    "strict": false
+                }
+            ],
+            "resource_records": [
+                {
+                    "content": [
+                        "1.2.3.4"
+                    ],
+                    "enabled": true,
+                    "meta": {}
+                },
+                {
+                    "content": [
+                        "5.6.7.8"
+                    ],
+                    "enabled": true,
+                    "meta": {}
+                }
+            ]
         }
+
     ]
 }
