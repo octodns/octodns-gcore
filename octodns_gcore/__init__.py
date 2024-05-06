@@ -406,7 +406,6 @@ class _BaseProvider(BaseProvider):
                 'host': check_params['host'],
                 # path properties is associated with url gcore param
                 'path': check_params['url'],
-                # 'url': check_params['url'],
                 'port': check_params['port'],
                 'protocol': check_params['protocol'],
                 'frequency': check_params['frequency'],
