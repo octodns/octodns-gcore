@@ -14,9 +14,9 @@ from octodns.provider import ProviderException
 from octodns.provider.base import BaseProvider
 from octodns.record import GeoCodes, Record, Update
 
-__VERSION__ = '0.0.5'
 # TODO: remove __VERSION__ with the next major version release
 __version__ = __VERSION__ = '0.0.4'
+
 
 class GCoreClientException(ProviderException):
     def __init__(self, r):
@@ -31,6 +31,119 @@ class GCoreClientBadRequest(GCoreClientException):
 class GCoreClientNotFound(GCoreClientException):
     def __init__(self, r):
         super().__init__(r)
+
+
+class _GcoreDynamicRecord(Record):
+    def __init__(self, zone, name, data, source=None, context=None):
+        super().__init__(zone, name, data, source, context)
+
+    @property
+    def healthcheck_host(self):
+        """Gcore API field : meta['failover']['host']"""
+        healthcheck = self.octodns.get('healthcheck', {})
+        if healthcheck.get('protocol', None) != 'HTTP':
+            return None
+        try:
+            return healthcheck['host']
+        except KeyError:
+            return 'gcore-healthcheck.tld'
+
+    @property
+    def healthcheck_path(self):
+        """Gcore API field : meta['failover']['url']"""
+        healthcheck = self.octodns.get('healthcheck', {})
+        if healthcheck.get('protocol', None) != 'HTTP':
+            return None
+        try:
+            return healthcheck['path']
+        except KeyError:
+            return '/dns-monitor'
+
+    @property
+    def healthcheck_protocol(self):
+        try:
+            return self.octodns['healthcheck']['protocol']
+        except KeyError:
+            return 'HTTP'
+
+    @property
+    def healthcheck_port(self):
+        try:
+            return int(self.octodns['healthcheck']['port'])
+        except KeyError:
+            return 80
+
+    @property
+    def healthcheck_frequency(self):
+        """Gcore API field : meta['failover']['frequency']"""
+        try:
+            return self.octodns['healthcheck']['frequency']
+        except KeyError:
+            return '60'
+
+    @property
+    def healthcheck_http_status_code(self):
+        """Gcore API field : meta['failover']['http_status_code']"""
+        healthcheck = self.octodns.get('healthcheck', {})
+        if healthcheck.get('protocol', None) != 'HTTP':
+            return None
+        try:
+            return self.octodns['healthcheck']['http_status_code']
+        except KeyError:
+            return '200'
+
+    @property
+    def healthcheck_method(self):
+        """Gcore API field : meta['failover']['method']"""
+        healthcheck = self.octodns.get('healthcheck', {})
+        if healthcheck.get('protocol', None) != 'HTTP':
+            return None
+        try:
+            return self.octodns['healthcheck']['method']
+        except KeyError:
+            return 'GET'
+
+    @property
+    def healthcheck_regexp(self):
+        """Gcore API field : meta['failover']['regexp']"""
+        healthcheck = self.octodns.get('healthcheck', {})
+        if healthcheck.get('protocol', None) == 'ICMP':
+            return None
+        try:
+            return self.octodns['healthcheck']['regexp']
+        except KeyError:
+            return 'ok'
+
+    @property
+    def healthcheck_command(self):
+        """Gcore API field : meta['failover']['command']"""
+        healthcheck = self.octodns.get('healthcheck', {})
+        protocol = healthcheck.get('protocol', None)
+        if protocol != "TCP" and protocol != "UDP":
+            return None
+        try:
+            return self.octodns['healthcheck']['command']
+        except KeyError:
+            return 'GET / HTTP/1.1\n\n'
+
+    @property
+    def healthcheck_tls(self):
+        """Gcore API field : meta['failover']['tls']"""
+        healthcheck = self.octodns.get('healthcheck', {})
+        if healthcheck.get('protocol', None) != 'HTTP':
+            return None
+        try:
+            return self.octodns['healthcheck']['tls']
+        except KeyError:
+            return False
+
+    @property
+    def healthcheck_timeout(self):
+        """Gcore API field : meta['failover']['timeout']"""
+        try:
+            return self.octodns['healthcheck']['timeout']
+        except KeyError:
+            return 10
 
 
 class GCoreClient(object):
