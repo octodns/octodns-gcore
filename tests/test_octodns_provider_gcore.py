@@ -746,14 +746,17 @@ class TestGCoreProvider(TestCase):
                             "path": "/dns-monitor",
                             "port": 80,
                             "protocol": "HTTP",
-                            "frequency": 300,
-                            "http_status_code": 200,
-                            "method": "GET",
-                            "regexp": "ok",
-                            "timeout": 10,
-                            "tls": False,
-                            "url": "/dns-monitor",
-                        }
+                        },
+                        'gcore': {
+                            "healthcheck": {
+                                "frequency": 300,
+                                "http_status_code": 200,
+                                "method": "GET",
+                                "regexp": "ok",
+                                "timeout": 10,
+                                "tls": False,
+                            }
+                        },
                     },
                 },
                 lenient=True,
@@ -775,7 +778,6 @@ class TestGCoreProvider(TestCase):
                         "meta": {
                             "failover": {
                                 "host": "gcore-test.tld",
-                                "path": "/dns-monitor",
                                 "port": 80,
                                 "protocol": "HTTP",
                                 "frequency": 300,
@@ -901,7 +903,6 @@ class TestGCoreProvider(TestCase):
                             "host": "dns-monitor.tld",
                             "http_status_code": 200,
                             "method": "GET",
-                            "path": "/dns-monitor",
                             "port": 80,
                             "protocol": "HTTP",
                             "regexp": "ok",
@@ -941,7 +942,6 @@ class TestGCoreProvider(TestCase):
                             "host": "dns-monitor.tld",
                             "http_status_code": 200,
                             "method": "GET",
-                            "path": "/dns-monitor",
                             "port": 80,
                             "protocol": "HTTP",
                             "regexp": "ok",
@@ -981,7 +981,6 @@ class TestGCoreProvider(TestCase):
                             "host": "dns-monitor.tld",
                             "http_status_code": 200,
                             "method": "GET",
-                            "path": "/dns-monitor",
                             "port": 80,
                             "protocol": "HTTP",
                             "regexp": "ok",
@@ -1043,14 +1042,17 @@ class TestGCoreProvider(TestCase):
                             "path": "/dns-monitor",
                             "port": 80,
                             "protocol": "HTTP",
-                            "frequency": 60,
-                            "http_status_code": 200,
-                            "method": "GET",
-                            "regexp": "ok",
-                            "timeout": 10,
-                            "tls": False,
-                            # "url": "/dns-monitor",
-                        }
+                        },
+                        'gcore': {
+                            "healthcheck": {
+                                "frequency": 60,
+                                "http_status_code": 200,
+                                "method": "GET",
+                                "regexp": "ok",
+                                "timeout": 10,
+                                "tls": False,
+                            }
+                        },
                     },
                 },
                 lenient=True,
@@ -1081,14 +1083,17 @@ class TestGCoreProvider(TestCase):
                             "path": "/dns-monitor",
                             "port": 80,
                             "protocol": "HTTP",
-                            "frequency": 60,
-                            "http_status_code": 200,
-                            "method": "GET",
-                            "regexp": "ok",
-                            "timeout": 10,
-                            "tls": False,
-                            # "url": "/dns-monitor",
-                        }
+                        },
+                        'gcore': {
+                            "healthcheck": {
+                                "frequency": 60,
+                                "http_status_code": 200,
+                                "method": "GET",
+                                "regexp": "ok",
+                                "timeout": 10,
+                                "tls": False,
+                            }
+                        },
                     },
                 },
                 lenient=True,
@@ -1119,14 +1124,17 @@ class TestGCoreProvider(TestCase):
                             "path": "/dns-monitor",
                             "port": 80,
                             "protocol": "HTTP",
-                            "frequency": 120,
-                            "http_status_code": 200,
-                            "method": "GET",
-                            "regexp": "ok",
-                            "timeout": 10,
-                            "tls": False,
-                            # "url": "/dns-monitor",
-                        }
+                        },
+                        'gcore': {
+                            "healthcheck": {
+                                "frequency": 120,
+                                "http_status_code": 200,
+                                "method": "GET",
+                                "regexp": "ok",
+                                "timeout": 10,
+                                "tls": False,
+                            }
+                        },
                     },
                 },
                 lenient=True,
@@ -1245,13 +1253,17 @@ class TestGCoreProvider(TestCase):
                             'path': "/monitor",
                             'port': 80,
                             'protocol': "HTTP",
-                            'frequency': 300,
-                            'http_status_code': 200,
-                            'method': "GET",
-                            'regexp': 'ok',
-                            'timeout': 10,
-                            'tls': False,
-                        }
+                        },
+                        'gcore': {
+                            "healthcheck": {
+                                'frequency': 300,
+                                'http_status_code': 200,
+                                'method': "GET",
+                                'regexp': 'ok',
+                                'timeout': 10,
+                                'tls': False,
+                            }
+                        },
                     },
                 },
             }
