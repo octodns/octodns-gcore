@@ -12,7 +12,7 @@ from requests import Session
 from octodns import __VERSION__ as octodns_version
 from octodns.provider import ProviderException
 from octodns.provider.base import BaseProvider
-from octodns.record import GeoCodes, Record
+from octodns.record import GeoCodes, Record, Update
 
 # TODO: remove __VERSION__ with the next major version release
 __version__ = __VERSION__ = '0.0.4'
@@ -227,7 +227,7 @@ class _BaseProvider(BaseProvider):
 
         return sorted(rules, key=lambda x: x["pool"])
 
-    def _data_for_dynamic(self, record, value_transform_fn=lambda x: x):
+    def _data_for_dynamic_geo(self, record, value_transform_fn=lambda x: x):
         default_pool = "other"
         pools, geo_sets, defaults = self._build_pools(
             record, default_pool, value_transform_fn
@@ -271,7 +271,7 @@ class _BaseProvider(BaseProvider):
         if record.get("filters") is None:
             return self._data_for_single(_type, record)
 
-        pools, rules, defaults = self._data_for_dynamic(
+        pools, rules, defaults = self._data_for_dynamic_geo(
             record, self._add_dot_if_need
         )
         return {
@@ -283,12 +283,25 @@ class _BaseProvider(BaseProvider):
 
     def _data_for_multiple(self, _type, record):
         extra = dict()
-        if record.get("filters") is not None:
-            pools, rules, defaults = self._data_for_dynamic(record)
-            extra = {
-                "dynamic": {"pools": pools, "rules": rules},
-                "values": defaults,
-            }
+        filters = record.get("filters")
+        if filters is not None:
+            filter_types = [filter['type'] for filter in filters]
+            if 'geodns' in filter_types:
+                pools, rules, defaults = self._data_for_dynamic_geo(record)
+                extra = {
+                    "dynamic": {"pools": pools, "rules": rules},
+                    "values": defaults,
+                }
+            else:
+                # other type should be "healthcheck"
+                pools, rules, octodns, defaults = (
+                    self._data_dynamic_healthcheck(record)
+                )
+                extra = {
+                    'dynamic': {'pools': pools, 'rules': [{'pool': 'pool-0'}]},
+                    'octodns': octodns,
+                    "values": defaults,
+                }
         else:
             extra = {
                 "values": [
@@ -368,6 +381,62 @@ class _BaseProvider(BaseProvider):
             ],
         }
 
+    def _data_dynamic_healthcheck(self, record):
+        defaults = [
+            resource['content'][0] for resource in record["resource_records"]
+        ]
+
+        pools = {
+            'pool-0': {
+                'values': [
+                    {
+                        'value': resource['content'][0],
+                        'status': 'obey',
+                        # 'status': 'up' if resource['enabled'] else 'down',
+                    }
+                    for resource in record["resource_records"]
+                ]
+            }
+        }
+
+        check_params = record['meta']['failover']
+        # gcore_api_meta_body = {
+        #     "meta": {
+        #         "failover": {
+        #             "frequency": 30,
+        #             "host": "dns-monitor.tld",
+        #             "http_status_code": 200,
+        #             "method": "GET",
+        #             "port": 80,
+        #             "protocol": "HTTP",
+        #             "regexp": "ok",
+        #             "timeout": 10,
+        #             "tls": False,
+        #             "url": "/dns-monitor"   }  }
+        octodns = {
+            'healthcheck': {
+                'host': check_params['host'],
+                # path properties is associated with url gcore param
+                'path': check_params['url'],
+                'port': check_params['port'],
+                'protocol': check_params['protocol'],
+            },
+            'gcore': {
+                'healthcheck': {
+                    'frequency': check_params['frequency'],
+                    'http_status_code': check_params['http_status_code'],
+                    'method': check_params['method'],
+                    'regexp': check_params['regexp'],
+                    'timeout': check_params['timeout'],
+                    'tls': check_params['tls'],
+                }
+            },
+        }
+        rules = [{'pool': 'pool-0'}]
+        self.log.debug('_data_dynamic_healthcheck = %s', str(octodns))
+
+        return pools, rules, octodns, defaults
+
     def zone_records(self, zone):
         try:
             return self._client.zone_records(zone.name[:-1]), True
@@ -419,8 +488,13 @@ class _BaseProvider(BaseProvider):
         name = record.get("name", "name-not-defined")
         if record.get("filters") is None:
             return False
-        want_filters = 3
         filters = record.get("filters", [])
+        types = [v.get("type") for v in filters]
+
+        if 'healthcheck' in types or ' ' in types:
+            return False
+
+        want_filters = 3
         if len(filters) != want_filters:
             self.log.info(
                 "ignore %s has filters and their count is not %d",
@@ -428,7 +502,6 @@ class _BaseProvider(BaseProvider):
                 want_filters,
             )
             return True
-        types = [v.get("type") for v in filters]
         for i, want_type in enumerate(["geodns", "default", "first_n"]):
             if types[i] != want_type:
                 self.log.info(
@@ -450,7 +523,28 @@ class _BaseProvider(BaseProvider):
             return True
         return False
 
-    def _params_for_dymanic(self, record):
+    def _params_for_dynamic_healthcheck(self, record):
+        """Return ressource records for dynamic healthcheck dynamic records
+
+        Cf. https://api.gcore.com/docs/dns#tag/RRsets/operation/UpdateRRSet
+
+        Args:
+            record (Record): _description_
+
+        Returns:
+            Resource_records: Array of objects (InputResourceRecord) [ items ]
+        """
+
+        resource_records = []
+
+        for value in record.dynamic.pools['pool-0'].data["values"]:
+            v = value["value"]
+            resource_records.append(
+                {"content": [v], "enabled": True, "meta": {}}
+            )
+        return resource_records
+
+    def _params_for_dynamic_geo(self, record):
         records = []
         default_pool_found = False
         default_values = set(
@@ -504,7 +598,7 @@ class _BaseProvider(BaseProvider):
 
         return {
             "ttl": record.ttl,
-            "resource_records": self._params_for_dymanic(record),
+            "resource_records": self._params_for_dynamic_geo(record),
             "filters": [
                 {"type": "geodns"},
                 {
@@ -518,8 +612,40 @@ class _BaseProvider(BaseProvider):
 
     def _params_for_multiple(self, record):
         extra = dict()
-        if record.dynamic:
-            extra["resource_records"] = self._params_for_dymanic(record)
+        # If the Record is an healthcheck dynamic record
+        if record.octodns.get('healthcheck'):
+
+            healthcheck = record.octodns['healthcheck']
+            healthcheck.update(record.octodns['gcore']['healthcheck'])
+            # path is translated to url for Gcore API
+            healthcheck['url'] = healthcheck['path']
+            healthcheck.pop('path')
+
+            extra['meta'] = {'failover': healthcheck}
+            # meta = {
+            #         "failover": {
+            #             "frequency": 180,
+            #             "host": "gcore-test.tld",
+            #             "http_status_code": 200,
+            #             "method": "GET",
+            #             "port": 80,
+            #             "protocol": "HTTP",
+            #             "regexp": "ok",
+            #             "timeout": 10,
+            #             "tls": False,
+            #             "url": "/ns1-monitor",  }  }
+            extra['pickers'] = [
+                {"type": "healthcheck", "strict": False},
+                {"type": "weighted_shuffle", "strict": False},
+            ]
+
+            extra["resource_records"] = self._params_for_dynamic_healthcheck(
+                record
+            )
+
+        # If the Record is a GeoDNS dynamic record
+        elif record.dynamic:
+            extra["resource_records"] = self._params_for_dynamic_geo(record)
             extra["filters"] = [
                 {"type": "geodns"},
                 {
@@ -533,6 +659,7 @@ class _BaseProvider(BaseProvider):
             extra["resource_records"] = [
                 {"content": [value]} for value in record.values
             ]
+
         return {"ttl": record.ttl, **extra}
 
     _params_for_A = _params_for_multiple
@@ -594,6 +721,7 @@ class _BaseProvider(BaseProvider):
         self.log.info("updating: %s", change)
         new = change.new
         data = getattr(self, f"_params_for_{new._type}")(new)
+        self.log.debug("updating: %s", str(data))
         self._client.record_update(
             new.zone.name[:-1], new.fqdn, new._type, data
         )
@@ -604,6 +732,49 @@ class _BaseProvider(BaseProvider):
         self._client.record_delete(
             existing.zone.name[:-1], existing.fqdn, existing._type
         )
+
+    def _extra_changes(self, existing, desired, changes):
+        self.log.debug(
+            "_extra_changes: existing=%s, desired=%s, (changes)=%d",
+            existing.name,
+            desired.name,
+            len(changes),
+        )
+        '''
+        An opportunity for providers to add extra changes to the plan that are
+        necessary to update ancillary record data or configure the zone. E.g.
+        base NS records.
+        '''
+        extra = []
+        desired_records = {r: r for r in desired.records}
+        changed = set([c.record for c in changes])
+
+        for record in existing.records:
+            if not getattr(record, 'dynamic', False):
+                # no need to check non-dynamic simple records
+                continue
+
+            update = False
+
+            desired_record = desired_records[record]
+            if record.octodns == desired_record.octodns:
+                continue
+            update = True
+
+            self.log.debug(
+                "_extra_changes: Existing record=%s, \noctodns=%s",
+                str(record.fqdn),
+                str(record.octodns),
+            )
+            self.log.debug(
+                "_extra_changes: Desired record=%s, \noctodns=%s",
+                str(desired_record.fqdn),
+                str(desired_record.octodns),
+            )
+            if update and record not in changed:
+                extra.append(Update(record, desired_record))
+
+        return extra
 
     def _apply(self, plan):
         desired = plan.desired

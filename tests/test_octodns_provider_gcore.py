@@ -143,11 +143,11 @@ class TestGCoreProvider(TestCase):
 
             zone = Zone("unit.tests.", [])
             provider.populate(zone, lenient=True)
-            self.assertEqual(17, len(zone.records))
+            self.assertEqual(20, len(zone.records))
             changes = self.expected.changes(zone, provider)
-            self.assertEqual(11, len(changes))
+            self.assertEqual(14, len(changes))
             self.assertEqual(
-                3, len([c for c in changes if isinstance(c, Create)])
+                6, len([c for c in changes if isinstance(c, Create)])
             )
             self.assertEqual(
                 1, len([c for c in changes if isinstance(c, Delete)])
@@ -721,13 +721,92 @@ class TestGCoreProvider(TestCase):
             )
         )
 
+        wanted.add_record(
+            Record.new(
+                wanted,
+                "a-healthcheck-simple",
+                {
+                    "ttl": 300,
+                    "type": "A",
+                    "value": ['11.22.33.44', '55.66.77.88'],
+                    'dynamic': {
+                        'pools': {
+                            'pool-0': {
+                                'values': [
+                                    {'value': '11.22.33.44', 'status': 'obey'},
+                                    {'value': '55.66.77.88', 'status': 'obey'},
+                                ]
+                            }
+                        },
+                        'rules': [{'pool': 'pool-0'}],
+                    },
+                    'octodns': {
+                        "healthcheck": {
+                            "host": "gcore-test.tld",
+                            "path": "/dns-monitor",
+                            "port": 80,
+                            "protocol": "HTTP",
+                        },
+                        'gcore': {
+                            "healthcheck": {
+                                "frequency": 300,
+                                "http_status_code": 200,
+                                "method": "GET",
+                                "regexp": "ok",
+                                "timeout": 10,
+                                "tls": False,
+                            }
+                        },
+                    },
+                },
+                lenient=True,
+            )
+        )
+
         plan = provider.plan(wanted)
         self.assertTrue(plan.exists)
-        self.assertEqual(4, len(plan.changes))
-        self.assertEqual(4, provider.apply(plan))
+        self.assertEqual(5, len(plan.changes))
+        self.assertEqual(5, provider.apply(plan))
 
         provider._client._request.assert_has_calls(
             [
+                call(
+                    "POST",
+                    "http://api/zones/unit.tests/a-healthcheck-simple.unit.tests./A",
+                    data={
+                        "ttl": 300,
+                        "meta": {
+                            "failover": {
+                                "host": "gcore-test.tld",
+                                "port": 80,
+                                "protocol": "HTTP",
+                                "frequency": 300,
+                                "http_status_code": 200,
+                                "method": "GET",
+                                "regexp": "ok",
+                                "timeout": 10,
+                                "tls": False,
+                                "url": "/dns-monitor",
+                            }
+                        },
+                        "pickers": [
+                            {"type": "healthcheck", "strict": False},
+                            {"type": "weighted_shuffle", "strict": False},
+                        ],
+                        "resource_records": [
+                            {
+                                "content": ["11.22.33.44"],
+                                "enabled": True,
+                                "meta": {},
+                            },
+                            {
+                                "content": ["55.66.77.88"],
+                                "enabled": True,
+                                "meta": {},
+                            },
+                        ],
+                    },
+                ),
                 call(
                     "POST",
                     "http://api/zones/unit.tests/cname-dflt.unit.tests./CNAME",
@@ -809,6 +888,263 @@ class TestGCoreProvider(TestCase):
                 ),
             ]
         )
+
+        # Check Healthcheck extra changes
+        provider._client._request.reset_mock()
+        provider._client.zone_records = Mock(
+            return_value=[
+                {
+                    "name": "a-healthcheck-simple",
+                    "ttl": 300,
+                    "type": "A",
+                    "meta": {
+                        "failover": {
+                            "frequency": 60,
+                            "host": "dns-monitor.tld",
+                            "http_status_code": 200,
+                            "method": "GET",
+                            "port": 80,
+                            "protocol": "HTTP",
+                            "regexp": "ok",
+                            "timeout": 10,
+                            "tls": False,
+                            "url": "/dns-monitor",
+                        }
+                    },
+                    "filters": [
+                        {"type": "healthcheck", "strict": "false"},
+                        {"type": "weighted_shuffle", "strict": "false"},
+                    ],
+                    "pickers": [
+                        {"type": "healthcheck", "strict": "false"},
+                        {"type": "weighted_shuffle", "strict": "false"},
+                    ],
+                    "resource_records": [
+                        {
+                            "content": ["11.22.33.44"],
+                            "enabled": "true",
+                            "meta": {},
+                        },
+                        {
+                            "content": ["55.66.77.88"],
+                            "enabled": "true",
+                            "meta": {},
+                        },
+                    ],
+                },
+                {
+                    "name": "a-healthcheck-simple-changed-ttl",
+                    "ttl": 300,
+                    "type": "A",
+                    "meta": {
+                        "failover": {
+                            "frequency": 60,
+                            "host": "dns-monitor.tld",
+                            "http_status_code": 200,
+                            "method": "GET",
+                            "port": 80,
+                            "protocol": "HTTP",
+                            "regexp": "ok",
+                            "timeout": 10,
+                            "tls": False,
+                            "url": "/dns-monitor",
+                        }
+                    },
+                    "filters": [
+                        {"type": "healthcheck", "strict": "false"},
+                        {"type": "weighted_shuffle", "strict": "false"},
+                    ],
+                    "pickers": [
+                        {"type": "healthcheck", "strict": "false"},
+                        {"type": "weighted_shuffle", "strict": "false"},
+                    ],
+                    "resource_records": [
+                        {
+                            "content": ["11.22.33.44"],
+                            "enabled": "true",
+                            "meta": {},
+                        },
+                        {
+                            "content": ["55.66.77.88"],
+                            "enabled": "true",
+                            "meta": {},
+                        },
+                    ],
+                },
+                {
+                    "name": "a-healthcheck-simple-changed-ttl-and-freq",
+                    "ttl": 300,
+                    "type": "A",
+                    "meta": {
+                        "failover": {
+                            "frequency": 60,
+                            "host": "dns-monitor.tld",
+                            "http_status_code": 200,
+                            "method": "GET",
+                            "port": 80,
+                            "protocol": "HTTP",
+                            "regexp": "ok",
+                            "timeout": 10,
+                            "tls": False,
+                            "url": "/dns-monitor",
+                        }
+                    },
+                    "filters": [
+                        {"type": "healthcheck", "strict": "false"},
+                        {"type": "weighted_shuffle", "strict": "false"},
+                    ],
+                    "pickers": [
+                        {"type": "healthcheck", "strict": "false"},
+                        {"type": "weighted_shuffle", "strict": "false"},
+                    ],
+                    "resource_records": [
+                        {
+                            "content": ["11.22.33.44"],
+                            "enabled": "true",
+                            "meta": {},
+                        },
+                        {
+                            "content": ["55.66.77.88"],
+                            "enabled": "true",
+                            "meta": {},
+                        },
+                    ],
+                },
+            ]
+        )
+
+        resp.json.side_effect = ["{}"]
+
+        wanted = Zone("unit.tests.", [])
+        # modified healthcheck host :
+        wanted.add_record(
+            Record.new(
+                wanted,
+                "a-healthcheck-simple",
+                {
+                    "ttl": 300,
+                    "type": "A",
+                    "value": ['11.22.33.44', '55.66.77.88'],
+                    'dynamic': {
+                        'pools': {
+                            'pool-0': {
+                                'values': [
+                                    {'value': '11.22.33.44', 'status': 'obey'},
+                                    {'value': '55.66.77.88', 'status': 'obey'},
+                                ]
+                            }
+                        },
+                        'rules': [{'pool': 'pool-0'}],
+                    },
+                    'octodns': {
+                        "healthcheck": {
+                            "host": "gcore-test.tld",
+                            "path": "/dns-monitor",
+                            "port": 80,
+                            "protocol": "HTTP",
+                        },
+                        'gcore': {
+                            "healthcheck": {
+                                "frequency": 60,
+                                "http_status_code": 200,
+                                "method": "GET",
+                                "regexp": "ok",
+                                "timeout": 10,
+                                "tls": False,
+                            }
+                        },
+                    },
+                },
+                lenient=True,
+            )
+        )
+        wanted.add_record(
+            Record.new(
+                wanted,
+                "a-healthcheck-simple-changed-ttl",
+                {
+                    "ttl": 60,
+                    "type": "A",
+                    "value": ['11.22.33.44', '55.66.77.88'],
+                    'dynamic': {
+                        'pools': {
+                            'pool-0': {
+                                'values': [
+                                    {'value': '11.22.33.44', 'status': 'obey'},
+                                    {'value': '55.66.77.88', 'status': 'obey'},
+                                ]
+                            }
+                        },
+                        'rules': [{'pool': 'pool-0'}],
+                    },
+                    'octodns': {
+                        "healthcheck": {
+                            "host": "dns-monitor.tld",
+                            "path": "/dns-monitor",
+                            "port": 80,
+                            "protocol": "HTTP",
+                        },
+                        'gcore': {
+                            "healthcheck": {
+                                "frequency": 60,
+                                "http_status_code": 200,
+                                "method": "GET",
+                                "regexp": "ok",
+                                "timeout": 10,
+                                "tls": False,
+                            }
+                        },
+                    },
+                },
+                lenient=True,
+            )
+        )
+        wanted.add_record(
+            Record.new(
+                wanted,
+                "a-healthcheck-simple-changed-ttl-and-freq",
+                {
+                    "ttl": 60,
+                    "type": "A",
+                    "value": ['11.22.33.44', '55.66.77.88'],
+                    'dynamic': {
+                        'pools': {
+                            'pool-0': {
+                                'values': [
+                                    {'value': '11.22.33.44', 'status': 'obey'},
+                                    {'value': '55.66.77.88', 'status': 'obey'},
+                                ]
+                            }
+                        },
+                        'rules': [{'pool': 'pool-0'}],
+                    },
+                    'octodns': {
+                        "healthcheck": {
+                            "host": "dns-monitor.tld",
+                            "path": "/dns-monitor",
+                            "port": 80,
+                            "protocol": "HTTP",
+                        },
+                        'gcore': {
+                            "healthcheck": {
+                                "frequency": 120,
+                                "http_status_code": 200,
+                                "method": "GET",
+                                "regexp": "ok",
+                                "timeout": 10,
+                                "tls": False,
+                            }
+                        },
+                    },
+                },
+                lenient=True,
+            )
+        )
+
+        plan = provider.plan(wanted)
+        self.assertTrue(plan.exists)
+        self.assertEqual(3, len(plan.changes))
+        self.assertEqual(3, provider.apply(plan))
 
     def test_provider_hierarchy(self):
         provider = GCoreProvider("test_id", token="token")
@@ -898,3 +1234,48 @@ class TestGCoreProvider(TestCase):
                         and not g.startswith("NA-CA-")
                     ]
                 )
+
+    def test__process_desired_zone_dynamic_healthcheck(self):
+        provider = GCoreProvider(
+            "test_id", token="token", strict_supports=False
+        )
+        for geo, prefix_name in [("NA-US-CA", "default")]:
+            data = {
+                "type": "A",
+                "ttl": 60,
+                "values": ["1.2.3.4"],
+                'dynamic': {
+                    'pools': {'pool-0': {'values': [{'value': '1.2.3.4'}]}},
+                    'rules': [{'pool': 'pool-0'}],
+                    'octodns': {
+                        'healthcheck': {
+                            'host': "gcore-test.tld",
+                            'path': "/monitor",
+                            'port': 80,
+                            'protocol': "HTTP",
+                        },
+                        'gcore': {
+                            "healthcheck": {
+                                'frequency': 300,
+                                'http_status_code': 200,
+                                'method': "GET",
+                                'regexp': 'ok',
+                                'timeout': 10,
+                                'tls': False,
+                            }
+                        },
+                    },
+                },
+            }
+            zone1 = Zone("unit.tests.", [])
+            record1 = Record.new(zone1, prefix_name, data=data, lenient=True)
+
+            zone1.add_record(record1)
+            result = provider._process_desired_zone(zone1.copy())
+            for record in result.records:
+
+                for rule in record.dynamic.rules:
+                    pool = rule.data.get("pool")
+
+                    value0 = record.dynamic.pools[pool].data["values"][0]
+                    assert value0['value'] == record.values[0]
