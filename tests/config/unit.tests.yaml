@@ -1,16 +1,6 @@
 ---
 ? ''
-: - geo:
-      AF:
-      - 2.2.3.4
-      - 2.2.3.5
-      AS-JP:
-      - 3.2.3.4
-      - 3.2.3.5
-      NA-US:
-      - 4.2.3.4
-      - 4.2.3.5
-    ttl: 300
+: - ttl: 300
     type: A
     values:
     - 1.2.3.4
@@ -152,10 +142,6 @@ ptr:
   ttl: 300
   type: PTR
   values: [foo.bar.com.]
-spf:
-  ttl: 600
-  type: SPF
-  value: v=spf1 ip4:192.168.0.1/16-all
 sub:
   type: 'NS'
   values:

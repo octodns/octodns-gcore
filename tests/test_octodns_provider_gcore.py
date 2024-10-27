@@ -1203,38 +1203,6 @@ class TestGCoreProvider(TestCase):
                         and not g.startswith("NA-CA-")
                     ]
 
-    def test__process_desired_zone_not_dynamic(self):
-        provider = GCoreProvider(
-            "test_id", token="token", strict_supports=False
-        )
-        geos = [
-            {"AF": ["2.2.3.4", "2.2.3.5"], "NA-US-CA": ["5.2.3.4", "5.2.3.5"]},
-            {"AF": ["2.2.3.4", "2.2.3.5"]},
-            {"NA-US-CA": ["5.2.3.4", "5.2.3.5"]},
-        ]
-        for i in geos:
-            data = {
-                "geo": i,
-                "ttl": 60,
-                "type": "A",
-                "values": ["1.2.3.4", "1.2.3.5"],
-            }
-            zone1 = Zone("unit.tests.", [])
-            record1 = Record.new(zone1, "test", data=data)
-
-            zone1.add_record(record1)
-            result = provider._process_desired_zone(zone1.copy())
-            for record in result.records:
-                geos = record.data.get("geo", {})
-                assert sorted(geos.keys()) == sorted(
-                    [
-                        g
-                        for g in geos
-                        if not g.startswith('NA-US-')
-                        and not g.startswith("NA-CA-")
-                    ]
-                )
-
     def test__process_desired_zone_dynamic_healthcheck(self):
         provider = GCoreProvider(
             "test_id", token="token", strict_supports=False
