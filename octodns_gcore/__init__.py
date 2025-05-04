@@ -832,32 +832,6 @@ class _BaseProvider(BaseProvider):
                     record = record.copy()
                     record.dynamic.rules = rules
                     desired.add_record(record, replace=True)
-            elif getattr(record, "geo", False):
-                geos = set(record.geo.keys())
-                filtered_geos = {
-                    g
-                    for g in geos
-                    if not g.startswith('NA-US-') and not g.startswith("NA-CA-")
-                }
-                if not filtered_geos:
-                    msg = f'NA-US- and NA-CA-* not supported for {record.fqdn}'
-                    fallback = 'skipping rule 0'
-                    self.supports_warn_or_except(msg, fallback)
-                elif geos != filtered_geos:
-                    msg = f'NA-US- and NA-CA-* not supported for {record.fqdn}'
-                    before = ', '.join(geos)
-                    after = ', '.join(filtered_geos)
-                    fallback = f'filtering rule 0 from ({before}) to ({after})'
-                    self.supports_warn_or_except(msg, fallback)
-                if geos != filtered_geos:
-                    record = record.copy()
-                    new_geo = {
-                        geo: value
-                        for geo, value in record.geo.items()
-                        if geo in filtered_geos
-                    }
-                    record.geo = new_geo
-                    desired.add_record(record, replace=True)
         return super()._process_desired_zone(desired)
 
 
