@@ -15,7 +15,7 @@ from octodns.provider.base import BaseProvider
 from octodns.record import GeoCodes, Record, Update
 
 # TODO: remove __VERSION__ with the next major version release
-__version__ = __VERSION__ = '0.0.4'
+__version__ = __VERSION__ = '1.0.0'
 
 
 class GCoreClientException(ProviderException):
