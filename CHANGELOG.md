@@ -10,6 +10,7 @@ Noteworthy Changes:
 Changes:
 
 * Address pending octoDNS 2.x deprecations, require minimum of 1.5.x
+
 ## v0.0.5 - 2023-12-xx - Root NS support
 
 * Add support for root NS updates
